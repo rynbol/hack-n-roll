@@ -1,6 +1,9 @@
+import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   Dimensions,
   Image,
   KeyboardAvoidingView,
@@ -25,6 +28,7 @@ import {
 } from 'react-native-heroicons/outline';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../../constants/colors';
+import { analyzeProfileImage } from '../../lib/imageAnalysis';
 
 const { width, height } = Dimensions.get('window');
 const hp = (percentage: number) => (height * percentage) / 100;
@@ -83,6 +87,79 @@ export default function ProfileScreen() {
   const [editedInterests, setEditedInterests] = useState<string[]>(user.interests);
   const [newClass, setNewClass] = useState('');
   const [newInterest, setNewInterest] = useState('');
+
+  // Image upload states
+  const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<string | null>(null);
+
+  // Image picker handler - uploads photo and analyzes with Gemini AI
+  const handlePickImage = async () => {
+    try {
+      // Request permission
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission Required',
+          'Please allow access to your photo library to upload a profile picture.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      // Launch image picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'] as any,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const imageUri = result.assets[0].uri;
+        setSelectedImageUri(imageUri);
+        setUser({ ...user, imgUrl: { uri: imageUri } });
+
+        // Analyze the image with Gemini AI
+        setIsAnalyzing(true);
+        const analysis = await analyzeProfileImage(imageUri);
+        setIsAnalyzing(false);
+
+        if (analysis.success && analysis.data) {
+          setAnalysisResult(analysis.data);
+          console.log('Image analysis result:', analysis.data);
+          
+          // Try to parse and apply the AI-generated profile
+          try {
+            const parsed = JSON.parse(analysis.data);
+            if (parsed.bio) {
+              setEditedBio(parsed.bio);
+              setUser(prev => ({ ...prev, bio: parsed.bio }));
+            }
+            if (parsed.interests && Array.isArray(parsed.interests)) {
+              setEditedInterests(parsed.interests);
+              setUser(prev => ({ ...prev, interests: parsed.interests }));
+            }
+            Alert.alert(
+              '✨ Profile Generated!',
+              'Your AI-generated profile is ready. Check out your new bio and interests!',
+              [{ text: 'Awesome!' }]
+            );
+          } catch {
+            // If parsing fails, just show the raw result
+            Alert.alert('Analysis Complete', 'Photo uploaded successfully!');
+          }
+        } else {
+          Alert.alert('Analysis Failed', analysis.error || 'Could not analyze the image.');
+        }
+      }
+    } catch (e) {
+      console.error('Image picker error:', e);
+      setIsAnalyzing(false);
+      Alert.alert('Error', String(e));
+    }
+  };
 
   // Bio handlers
   const handleSaveBio = () => {
@@ -258,8 +335,14 @@ export default function ProfileScreen() {
                 borderWidth: 3,
                 borderColor: colors.white,
               }}
+              onPress={handlePickImage}
+              disabled={isAnalyzing}
             >
-              <CameraIcon size={16} color="white" strokeWidth={2.5} />
+              {isAnalyzing ? (
+                <ActivityIndicator size={16} color="white" />
+              ) : (
+                <CameraIcon size={16} color="white" strokeWidth={2.5} />
+              )}
             </TouchableOpacity>
           </View>
 
