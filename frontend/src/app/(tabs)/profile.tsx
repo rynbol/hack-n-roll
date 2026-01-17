@@ -2,9 +2,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  Dimensions,
+  ActivityIndicator, Alert, Dimensions,
   Image,
   KeyboardAvoidingView,
   Modal,
@@ -14,12 +12,16 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import {
   AcademicCapIcon,
   BookOpenIcon,
   CameraIcon,
+  ClockIcon,
+  FireIcon,
+  HandRaisedIcon,
+  HeartIcon,
   PencilIcon,
   PlusIcon,
   SparklesIcon,
@@ -44,6 +46,11 @@ interface UserProfile {
   major: string;
   classes: string[];
   interests: string[];
+  studyVibe?: string;
+  procrastinationStyle?: string;
+  willTradeNotesFor?: string;
+  academicSpiritAnimal?: string;
+  studySessionDealBreakers?: string[];
 }
 
 // Mock user profile
@@ -87,17 +94,15 @@ export default function ProfileScreen() {
   const [editedInterests, setEditedInterests] = useState<string[]>(user.interests);
   const [newClass, setNewClass] = useState('');
   const [newInterest, setNewInterest] = useState('');
-
-  // Image upload states
   const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
 
-  // Image picker handler - uploads photo and analyzes with Gemini AI
   const handlePickImage = async () => {
     try {
       // Request permission
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      console.log("Permission result:", status);
 
       if (status !== 'granted') {
         Alert.alert(
@@ -115,49 +120,70 @@ export default function ProfileScreen() {
         aspect: [1, 1],
         quality: 0.8,
       });
+      console.log("Picker result:", result);
 
       if (!result.canceled && result.assets[0]) {
         const imageUri = result.assets[0].uri;
         setSelectedImageUri(imageUri);
         setUser({ ...user, imgUrl: { uri: imageUri } });
 
-        // Analyze the image with Gemini AI
+        // Analyze the image with LLM
         setIsAnalyzing(true);
-        const analysis = await analyzeProfileImage(imageUri);
+        const analysis = await analyzeProfileImage(
+          imageUri
+        );
         setIsAnalyzing(false);
 
         if (analysis.success && analysis.data) {
           setAnalysisResult(analysis.data);
           console.log('Image analysis result:', analysis.data);
-          
-          // Try to parse and apply the AI-generated profile
+
+          // Parse the JSON response and update profile
           try {
-            const parsed = JSON.parse(analysis.data);
-            if (parsed.bio) {
-              setEditedBio(parsed.bio);
-              setUser(prev => ({ ...prev, bio: parsed.bio }));
+            let jsonString = analysis.data;
+
+            // Remove markdown code blocks if present
+            jsonString = jsonString.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+
+            // Try to extract JSON object if there's extra text
+            const jsonMatch = jsonString.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              jsonString = jsonMatch[0];
             }
-            if (parsed.interests && Array.isArray(parsed.interests)) {
-              setEditedInterests(parsed.interests);
-              setUser(prev => ({ ...prev, interests: parsed.interests }));
-            }
-            Alert.alert(
-              '✨ Profile Generated!',
-              'Your AI-generated profile is ready. Check out your new bio and interests!',
-              [{ text: 'Awesome!' }]
-            );
-          } catch {
-            // If parsing fails, just show the raw result
-            Alert.alert('Analysis Complete', 'Photo uploaded successfully!');
+
+            console.log('Attempting to parse JSON:', jsonString);
+            const parsedData = JSON.parse(jsonString);
+
+            // Update user profile with all new fields
+            setUser(prev => ({
+              ...prev,
+              bio: parsedData.aboutMe || parsedData['About Me'] || prev.bio,
+              interests: parsedData.interests || prev.interests,
+              studyVibe: parsedData.studyVibe,
+              procrastinationStyle: parsedData.procrastinationStyle,
+              willTradeNotesFor: parsedData.willTradeNotesFor,
+              academicSpiritAnimal: parsedData.academicSpiritAnimal,
+              studySessionDealBreakers: parsedData.studySessionDealBreakers,
+            }));
+
+            // Update edited values
+            setEditedBio(parsedData.aboutMe || parsedData['About Me'] || user.bio);
+            setEditedInterests(parsedData.interests || user.interests);
+
+            Alert.alert('Profile Updated!', 'Your profile has been generated from your photo.');
+          } catch (parseError) {
+            console.error('Error parsing analysis result:', parseError);
+            console.error('Raw data:', analysis.data);
+            Alert.alert('Analysis Complete', 'Image analyzed but could not parse the result. Check console for details.');
           }
         } else {
+          console.error('Image analysis failed:', analysis.error);
           Alert.alert('Analysis Failed', analysis.error || 'Could not analyze the image.');
         }
       }
     } catch (e) {
-      console.error('Image picker error:', e);
-      setIsAnalyzing(false);
-      Alert.alert('Error', String(e));
+      console.error("Image picker error:", e);
+      Alert.alert("Error", String(e));
     }
   };
 
@@ -304,62 +330,67 @@ export default function ProfileScreen() {
         </LinearGradient>
 
         {/* Profile Photo */}
-        <View className="items-center" style={{ marginTop: -hp(7) }}>
+        <View className="items-center" style={{ marginTop: -hp(8) }}>
           <View
             className="bg-white rounded-full items-center justify-center"
             style={{
-              width: wp(30),
-              height: wp(30),
-              borderWidth: 4,
-              borderColor: colors.white,
-              shadowColor: colors.black,
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.1,
-              shadowRadius: 8,
-              elevation: 4,
+              width: wp(28),
+              height: wp(28),
+              borderWidth: 3,
+              borderColor: '#fff',
             }}
           >
             <Image
               source={user.imgUrl}
               style={{
-                width: wp(28),
-                height: wp(28),
-                borderRadius: wp(14),
+                width: wp(26),
+                height: wp(26),
+                borderRadius: wp(13),
               }}
               resizeMode="cover"
             />
+            {isAnalyzing && (
+              <View
+                className="absolute items-center justify-center"
+                style={{
+                  width: wp(26),
+                  height: wp(26),
+                  borderRadius: wp(13),
+                  backgroundColor: 'rgba(0,0,0,0.5)',
+                }}
+              >
+                <ActivityIndicator size="large" color="#fff" />
+                <Text
+                  className="text-white text-xs mt-1"
+                  style={{ fontFamily: 'SpaceGrotesk-Medium' }}
+                >
+                  Analyzing...
+                </Text>
+              </View>
+            )}
             <TouchableOpacity
-              className="absolute bottom-0 right-0 rounded-full p-2"
-              style={{
-                backgroundColor: colors.primary,
-                borderWidth: 3,
-                borderColor: colors.white,
-              }}
+              className="absolute bottom-0 right-0 bg-[#F26322] rounded-full p-1.5"
               onPress={handlePickImage}
               disabled={isAnalyzing}
             >
-              {isAnalyzing ? (
-                <ActivityIndicator size={16} color="white" />
-              ) : (
-                <CameraIcon size={16} color="white" strokeWidth={2.5} />
-              )}
+              <CameraIcon size={14} color="white" strokeWidth={2.5} />
             </TouchableOpacity>
           </View>
 
           {/* Name and Age */}
           <Text
-            className="text-2xl font-bold mt-3"
-            style={{ fontFamily: 'SpaceGrotesk-Bold', color: colors.textPrimary }}
+            className="text-2xl font-bold text-gray-900 mt-3"
+            style={{ fontFamily: 'SpaceGrotesk-Bold' }}
           >
             {user.name}, {user.age}
           </Text>
 
           {/* University */}
           <View className="flex-row items-center mt-1">
-            <AcademicCapIcon size={16} color={colors.textSecondary} strokeWidth={2} />
+            <AcademicCapIcon size={16} color="#6B7280" strokeWidth={2} />
             <Text
-              className="ml-1 text-sm"
-              style={{ fontFamily: 'SpaceGrotesk-Medium', color: colors.textSecondary }}
+              className="text-gray-500 ml-1 text-sm"
+              style={{ fontFamily: 'SpaceGrotesk-Medium' }}
             >
               {user.university}
             </Text>
@@ -428,7 +459,7 @@ export default function ProfileScreen() {
           {/* Major Card */}
           <ProfileCard title="Major" icon={AcademicCapIcon} onEdit={() => setEditingMajor(true)}>
             <Text
-              style={{ fontFamily: 'SpaceGrotesk-Medium', fontSize: 14, color: colors.textPrimary }}
+              style={{ fontFamily: 'SpaceGrotesk-Regular', fontSize: 14, color: colors.textSecondary }}
             >
               {user.major}
             </Text>
@@ -445,7 +476,7 @@ export default function ProfileScreen() {
                 >
                   <Text
                     className="text-sm"
-                    style={{ fontFamily: 'SpaceGrotesk-Medium', color: colors.primary }}
+                    style={{ fontFamily: 'SpaceGrotesk-Regular', color: colors.primary }}
                   >
                     {course}
                   </Text>
@@ -461,11 +492,13 @@ export default function ProfileScreen() {
                 <View
                   key={index}
                   className="rounded-full px-3 py-1.5 mr-2 mb-2"
-                  style={{ backgroundColor: colors.backgroundGray }}
+                  style={{ backgroundColor: colors.backgroundGray, maxWidth: wp(85) }}
                 >
                   <Text
                     className="text-sm"
-                    style={{ fontFamily: 'SpaceGrotesk-Medium', color: colors.textSecondary }}
+                    style={{ fontFamily: 'SpaceGrotesk-Regular', color: colors.textSecondary }}
+                    numberOfLines={2}
+                    ellipsizeMode="tail"
                   >
                     {interest}
                   </Text>
@@ -473,6 +506,70 @@ export default function ProfileScreen() {
               ))}
             </View>
           </ProfileCard>
+
+          {/* Study Vibe Card */}
+          {user.studyVibe && (
+            <ProfileCard title="Study Vibe" icon={FireIcon} onEdit={() => {}}>
+              <Text
+                style={{ fontFamily: 'SpaceGrotesk-Regular', fontSize: 14, color: colors.textSecondary }}
+              >
+                {user.studyVibe}
+              </Text>
+            </ProfileCard>
+          )}
+
+          {/* Procrastination Style Card */}
+          {user.procrastinationStyle && (
+            <ProfileCard title="Procrastination Style" icon={ClockIcon} onEdit={() => {}}>
+              <Text
+                style={{ fontFamily: 'SpaceGrotesk-Regular', fontSize: 14, color: colors.textSecondary }}
+              >
+                {user.procrastinationStyle}
+              </Text>
+            </ProfileCard>
+          )}
+
+          {/* Will Trade Notes For Card */}
+          {user.willTradeNotesFor && (
+            <ProfileCard title="Will Trade Notes For" icon={HeartIcon} onEdit={() => {}}>
+              <Text
+                style={{ fontFamily: 'SpaceGrotesk-Regular', fontSize: 14, color: colors.textSecondary }}
+              >
+                {user.willTradeNotesFor}
+              </Text>
+            </ProfileCard>
+          )}
+
+          {/* Academic Spirit Animal Card */}
+          {user.academicSpiritAnimal && (
+            <ProfileCard title="Academic Spirit Animal" icon={SparklesIcon} onEdit={() => {}}>
+              <Text
+                style={{ fontFamily: 'SpaceGrotesk-Regular', fontSize: 14, color: colors.textSecondary, lineHeight: 20 }}
+              >
+                {user.academicSpiritAnimal}
+              </Text>
+            </ProfileCard>
+          )}
+
+          {/* Study Session Deal Breakers Card */}
+          {user.studySessionDealBreakers && user.studySessionDealBreakers.length > 0 && (
+            <ProfileCard title="Study Session Deal Breakers" icon={HandRaisedIcon} onEdit={() => {}}>
+              {user.studySessionDealBreakers.map((dealBreaker, index) => (
+                <View key={index} className="flex-row mb-2">
+                  <Text
+                    style={{ fontFamily: 'SpaceGrotesk-Regular', fontSize: 14, color: colors.textSecondary, marginRight: 6 }}
+                  >
+                    •
+                  </Text>
+                  <Text
+                    style={{ fontFamily: 'SpaceGrotesk-Regular', fontSize: 14, color: colors.textSecondary, flex: 1 }}
+                  >
+                    {dealBreaker}
+                  </Text>
+                </View>
+              ))}
+            </ProfileCard>
+          )}
         </View>
       </ScrollView>
 
