@@ -30,7 +30,7 @@ const mockUser: UserProfile = {
   id: '1',
   name: 'Alex Johnson',
   age: 20,
-  imgUrl: require('../../../assets/icon.png'),
+  imgUrl: require('../../../assets/HeartIcon.png'),
   bio: 'Computer Science student passionate about AI and machine learning. Always looking for study partners and project collaborators!',
   university: 'Boston University',
   major: 'Computer Science',

@@ -1,52 +1,40 @@
-import ClaudeProvider from './claude.js';
-import OpenAIProvider from './openai.js';
+import GeminiProvider from './gemini.js';
 
 /**
  * AI Provider Factory
- * Creates and manages AI providers (Claude, OpenAI)
+ * Creates and manages AI providers (Gemini)
  */
 class AIProviderFactory {
   constructor() {
     this.providers = new Map();
-    this.defaultProvider = process.env.AI_DEFAULT_PROVIDER || 'claude';
+    this.defaultProvider = process.env.AI_DEFAULT_PROVIDER || 'gemini';
   }
 
   /**
    * Initialize providers with API keys from environment
    */
   initializeProviders() {
-    // Initialize Claude if API key is available
-    if (process.env.ANTHROPIC_API_KEY) {
+    // Initialize Gemini if API key is available
+    if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'your_gemini_api_key_here') {
       try {
-        const claude = new ClaudeProvider(process.env.ANTHROPIC_API_KEY);
-        this.providers.set('claude', claude);
-        console.log('✓ Claude AI provider initialized');
+        const gemini = new GeminiProvider(process.env.GEMINI_API_KEY);
+        this.providers.set('gemini', gemini);
+        console.log('✓ Gemini AI provider initialized');
       } catch (error) {
-        console.warn('⚠ Claude AI provider failed to initialize:', error.message);
-      }
-    }
-
-    // Initialize OpenAI if API key is available
-    if (process.env.OPENAI_API_KEY) {
-      try {
-        const openai = new OpenAIProvider(process.env.OPENAI_API_KEY);
-        this.providers.set('openai', openai);
-        console.log('✓ OpenAI provider initialized');
-      } catch (error) {
-        console.warn('⚠ OpenAI provider failed to initialize:', error.message);
+        console.warn('⚠ Gemini AI provider failed to initialize:', error.message);
       }
     }
 
     if (this.providers.size === 0) {
       console.warn(
-        '⚠ No AI providers initialized. Set ANTHROPIC_API_KEY or OPENAI_API_KEY in .env'
+        '⚠ No AI providers initialized. Set GEMINI_API_KEY in .env'
       );
     }
   }
 
   /**
    * Get a specific AI provider
-   * @param {string} providerName - Name of the provider ('claude' or 'openai')
+   * @param {string} providerName - Name of the provider ('gemini')
    * @returns {Object} AI provider instance
    * @throws {Error} If provider is not available
    */

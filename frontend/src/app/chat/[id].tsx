@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   Platform,
   Dimensions,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import {
   ChevronLeftIcon,
@@ -18,56 +20,48 @@ import {
 import {EllipsisHorizontalIcon} from 'react-native-heroicons/solid';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useRouter, useLocalSearchParams} from 'expo-router';
+import {useAuth} from '../../hooks/useAuth';
+import {useMessages} from '../../hooks/useChat';
 
 const android = Platform.OS === 'android';
 const {height} = Dimensions.get('window');
 const hp = (percentage: number) => (height * percentage) / 100;
 
-interface Message {
-  message: string;
-  sender: 'me' | 'them';
-  timestamp: string;
-}
-
-// Mock chat data - will be replaced with Supabase/Sendbird data
-const mockMessages: Message[] = [
-  {
-    message: 'Hey! Want to study for the CS exam together?',
-    sender: 'them',
-    timestamp: '10:30 AM',
-  },
-  {
-    message: 'Sure! When are you free?',
-    sender: 'me',
-    timestamp: '10:32 AM',
-  },
-  {
-    message: 'How about tomorrow at the library?',
-    sender: 'them',
-    timestamp: '10:33 AM',
-  },
-  {
-    message: 'Perfect! See you there at 2pm?',
-    sender: 'me',
-    timestamp: '10:35 AM',
-  },
-];
-
 export default function ChatDetailsScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const {id, name, age} = params;
+  const {user} = useAuth();
 
-  const [messages] = useState<Message[]>(mockMessages);
+  const {messages, loading, sendMessage} = useMessages(
+    id as string,
+    user?.id
+  );
   const [messageText, setMessageText] = useState('');
+  const [sending, setSending] = useState(false);
 
-  const handleSendMessage = () => {
-    if (messageText.trim()) {
-      // TODO: Send message to backend
-      console.log('Sending message:', messageText);
+  const handleSendMessage = async () => {
+    if (!messageText.trim() || sending) return;
+
+    try {
+      setSending(true);
+      await sendMessage(messageText);
       setMessageText('');
+    } catch (error: any) {
+      console.error('Error sending message:', error);
+      Alert.alert('Error', 'Failed to send message');
+    } finally {
+      setSending(false);
     }
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 bg-white items-center justify-center">
+        <ActivityIndicator size="large" color="#F26322" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView
@@ -86,7 +80,7 @@ export default function ChatDetailsScreen() {
           <ChevronLeftIcon size={hp(2.5)} color={'black'} strokeWidth={2} />
           <View className="border-2 rounded-full border-red-400 mr-2 ml-4">
             <Image
-              source={require('../../../assets/icon.png')}
+              source={require('../../../assets/HeartIcon.png')}
               style={{
                 width: hp(4.5),
                 height: hp(4.5),
@@ -209,8 +203,13 @@ export default function ChatDetailsScreen() {
         <TouchableOpacity
           className="bg-blue-500 rounded-2xl py-3 w-[13%] justify-center items-center"
           onPress={handleSendMessage}
+          disabled={sending || !messageText.trim()}
         >
-          <PaperAirplaneIcon color={'white'} />
+          {sending ? (
+            <ActivityIndicator color="white" size="small" />
+          ) : (
+            <PaperAirplaneIcon color={'white'} />
+          )}
         </TouchableOpacity>
       </View>
     </SafeAreaView>

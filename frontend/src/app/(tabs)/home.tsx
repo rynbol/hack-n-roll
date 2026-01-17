@@ -5,18 +5,23 @@ import {
   TouchableOpacity,
   Image,
   Platform,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import Carousel from 'react-native-snap-carousel';
 import DatesCard, {Profile} from '../../components/DatesCard';
-import {BellIcon} from 'react-native-heroicons/outline';
+import {BellIcon, HeartIcon, XMarkIcon} from 'react-native-heroicons/outline';
+import {useAuth} from '../../hooks/useAuth';
+import {useProfiles} from '../../hooks/useProfiles';
+import {useRouter} from 'expo-router';
 
 const android = Platform.OS === 'android';
 const {width, height} = Dimensions.get('window');
 const hp = (percentage: number) => (height * percentage) / 100;
 
-// Temporary mock data - will be replaced with Supabase data
+// Mock profiles for testing when not authenticated
 const mockProfiles: Profile[] = [
   {
     id: '1',
@@ -57,12 +62,102 @@ const mockProfiles: Profile[] = [
 ];
 
 export default function HomeScreen() {
-  const [profiles] = useState<Profile[]>(mockProfiles);
+  const router = useRouter();
+  const {user, isAuthenticated} = useAuth();
+  const {profiles: realProfiles, loading, likeProfile, skipProfile, refresh} = useProfiles(user?.id);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [actionLoading, setActionLoading] = useState(false);
+  const carouselRef = useRef<any>(null);
+
+  // Use mock profiles if not authenticated or no real profiles
+  const profiles = isAuthenticated && realProfiles.length > 0 ? realProfiles : mockProfiles;
+
+  // TODO: Uncomment when auth is fully implemented
+  // useEffect(() => {
+  //   if (!isAuthenticated) {
+  //     router.replace('/');
+  //   }
+  // }, [isAuthenticated, router]);
+
+  const handleLike = async () => {
+    if (currentIndex >= profiles.length || actionLoading) return;
+
+    const currentProfile = profiles[currentIndex];
+
+    // If authenticated, use real backend
+    if (isAuthenticated && user) {
+      try {
+        setActionLoading(true);
+        await likeProfile(currentProfile.id);
+        Alert.alert('Liked!', `You liked ${currentProfile.name}`);
+      } catch (error: any) {
+        console.error('Error liking profile:', error);
+        Alert.alert('Error', 'Failed to like profile');
+        return;
+      } finally {
+        setActionLoading(false);
+      }
+    } else {
+      // Demo mode - just show alert
+      Alert.alert('Liked!', `You liked ${currentProfile.name}`);
+    }
+
+    // Move to next profile
+    if (currentIndex < profiles.length - 1) {
+      carouselRef.current?.snapToNext();
+    } else {
+      setCurrentIndex(0);
+      carouselRef.current?.snapToItem(0);
+    }
+  };
+
+  const handleSkip = async () => {
+    if (currentIndex >= profiles.length || actionLoading) return;
+
+    const currentProfile = profiles[currentIndex];
+
+    // If authenticated, use real backend
+    if (isAuthenticated && user) {
+      try {
+        setActionLoading(true);
+        await skipProfile(currentProfile.id);
+      } catch (error: any) {
+        console.error('Error skipping profile:', error);
+        Alert.alert('Error', 'Failed to skip profile');
+        return;
+      } finally {
+        setActionLoading(false);
+      }
+    }
+
+    // Move to next profile
+    if (currentIndex < profiles.length - 1) {
+      carouselRef.current?.snapToNext();
+    } else {
+      setCurrentIndex(0);
+      carouselRef.current?.snapToItem(0);
+    }
+  };
 
   const handleCardClick = (item: Profile) => {
     console.log('Profile clicked:', item.name);
-    // TODO: Navigate to profile details or handle swipe
+    // Could navigate to detailed profile view
   };
+
+  // Only show loading if authenticated and actually fetching data
+  if (isAuthenticated && loading) {
+    return (
+      <SafeAreaView className="flex-1 bg-white items-center justify-center">
+        <ActivityIndicator size="large" color="#F26322" />
+        <Text
+          className="mt-4 text-gray-600"
+          style={{fontFamily: 'SpaceGrotesk-Regular'}}
+        >
+          Loading profiles...
+        </Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView
@@ -75,7 +170,7 @@ export default function HomeScreen() {
       <View className="w-full flex-row justify-between items-center px-4 mb-8">
         <View className="rounded-full items-center justify-center">
           <Image
-            source={require('../../../assets/icon.png')}
+            source={require('../../../assets/HeartIcon.png')}
             style={{
               width: hp(4.5),
               height: hp(4.5),
@@ -102,32 +197,94 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Carousel */}
-      <View className="pb-4">
-        <View className="mx-4 mb-4">
+      {/* Content */}
+      {profiles.length === 0 ? (
+        <View className="flex-1 items-center justify-center px-6">
           <Text
-            className="capitalize text-2xl font-semibold"
-            style={{fontFamily: 'SpaceGrotesk-SemiBold'}}
+            className="text-2xl font-bold text-gray-900 mb-2 text-center"
+            style={{fontFamily: 'SpaceGrotesk-Bold'}}
           >
-            Find study partners
+            No More Profiles
           </Text>
+          <Text
+            className="text-base text-gray-600 text-center mb-6"
+            style={{fontFamily: 'SpaceGrotesk-Regular'}}
+          >
+            Check back later for new study partners!
+          </Text>
+          <TouchableOpacity
+            className="bg-[#F26322] px-6 py-3 rounded-xl"
+            onPress={refresh}
+          >
+            <Text
+              className="text-white font-bold"
+              style={{fontFamily: 'SpaceGrotesk-Bold'}}
+            >
+              Refresh
+            </Text>
+          </TouchableOpacity>
         </View>
+      ) : (
+        <>
+          {/* Carousel */}
+          <View className="pb-4 flex-1">
+            <View className="mx-4 mb-4">
+              <Text
+                className="capitalize text-2xl font-semibold"
+                style={{fontFamily: 'SpaceGrotesk-SemiBold'}}
+              >
+                Find study partners
+              </Text>
+            </View>
 
-        <View>
-          <Carousel
-            data={profiles}
-            renderItem={({item}) => (
-              <DatesCard item={item} handleClick={handleCardClick} />
-            )}
-            firstItem={1}
-            inactiveSlideScale={0.86}
-            inactiveSlideOpacity={0.6}
-            sliderWidth={width}
-            itemWidth={width * 0.8}
-            slideStyle={{display: 'flex', alignItems: 'center'}}
-          />
-        </View>
-      </View>
+            <View>
+              <Carousel
+                ref={carouselRef}
+                data={profiles}
+                renderItem={({item}) => (
+                  <DatesCard item={item} handleClick={handleCardClick} />
+                )}
+                firstItem={0}
+                inactiveSlideScale={0.86}
+                inactiveSlideOpacity={0.6}
+                sliderWidth={width}
+                itemWidth={width * 0.8}
+                slideStyle={{display: 'flex', alignItems: 'center'}}
+                onSnapToItem={(index) => setCurrentIndex(index)}
+              />
+            </View>
+          </View>
+
+          {/* Action Buttons */}
+          <View className="px-6 pb-8 flex-row justify-center items-center space-x-6">
+            {/* Skip Button */}
+            <TouchableOpacity
+              className="bg-red-500 w-16 h-16 rounded-full items-center justify-center shadow-lg"
+              onPress={handleSkip}
+              disabled={actionLoading}
+            >
+              {actionLoading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <XMarkIcon size={32} color="white" strokeWidth={3} />
+              )}
+            </TouchableOpacity>
+
+            {/* Like Button */}
+            <TouchableOpacity
+              className="bg-[#F26322] w-20 h-20 rounded-full items-center justify-center shadow-lg"
+              onPress={handleLike}
+              disabled={actionLoading}
+            >
+              {actionLoading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <HeartIcon size={40} color="white" strokeWidth={3} />
+              )}
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
     </SafeAreaView>
   );
 }
