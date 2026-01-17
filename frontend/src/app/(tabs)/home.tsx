@@ -26,7 +26,7 @@ const hp = (percentage: number) => (height * percentage) / 100;
 const mockProfiles: Profile[] = [
   {
     id: '1',
-    imgUrl: require('../../../assets/HeartIcon.png'),
+    imgUrl: require('../../../assets/images/GIRL.jpg'),
     name: 'Sarah',
     lastName: 'Johnson',
     age: 20,
@@ -34,23 +34,23 @@ const mockProfiles: Profile[] = [
     country: 'USA',
     major: 'Computer Science',
     university: 'Boston University',
-    bio: 'Looking for study partners in CS courses! Love coding and coffee.',
+    bio: 'Looking for study partners in CS courses! Love coding and coffee ☕',
   },
   {
     id: '2',
-    imgUrl: require('../../../assets/HeartIcon.png'),
-    name: 'Mike',
+    imgUrl: require('../../../assets/images/GIRL2.png.webp'),
+    name: 'Emily',
     lastName: 'Chen',
     age: 21,
     city: 'Boston',
     country: 'USA',
     major: 'Data Science',
     university: 'Boston University',
-    bio: 'Data enthusiast! Always down to collaborate on projects.',
+    bio: 'Data enthusiast! Always down to collaborate on projects 📊',
   },
   {
     id: '3',
-    imgUrl: require('../../../assets/HeartIcon.png'),
+    imgUrl: require('../../../assets/images/GIRL3.webp'),
     name: 'Emma',
     lastName: 'Davis',
     age: 19,
@@ -58,7 +58,7 @@ const mockProfiles: Profile[] = [
     country: 'USA',
     major: 'Software Engineering',
     university: 'Boston University',
-    bio: 'Building cool stuff and meeting cool people!',
+    bio: 'Building cool stuff and meeting cool people! 🚀',
   },
 ];
 
