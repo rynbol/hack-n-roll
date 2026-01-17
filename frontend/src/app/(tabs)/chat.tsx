@@ -17,6 +17,9 @@ import {useRouter} from 'expo-router';
 import {useAuth} from '../../hooks/useAuth';
 import {useMatches} from '../../hooks/useMatches';
 import {useChat} from '../../hooks/useChat';
+import {Badge} from '../../components/Badge';
+import {VerifiedBadge} from '../../components/VerifiedBadge';
+import {colors} from '../../constants/colors';
 
 const android = Platform.OS === 'android';
 const {height} = Dimensions.get('window');
@@ -36,7 +39,7 @@ export default function ChatScreen() {
   if (matchesLoading || chatsLoading) {
     return (
       <SafeAreaView className="flex-1 bg-white items-center justify-center">
-        <ActivityIndicator size="large" color="#F26322" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </SafeAreaView>
     );
   }
@@ -50,10 +53,13 @@ export default function ChatScreen() {
     >
       <View className="px-4">
         <Text
-          className="uppercase font-semibold text-neutral-500 tracking-wider"
-          style={{fontFamily: 'SpaceGrotesk-SemiBold'}}
+          className="uppercase font-bold tracking-wider text-lg"
+          style={{
+            fontFamily: 'SpaceGrotesk-Bold',
+            color: colors.primary,
+          }}
         >
-          Connections
+          New Matches
         </Text>
       </View>
       <MatchesList
@@ -93,10 +99,13 @@ export default function ChatScreen() {
       <View className="px-4">
         <View className="border-b border-neutral-300 py-4">
           <Text
-            className="uppercase font-semibold text-neutral-500 tracking-wider"
-            style={{fontFamily: 'SpaceGrotesk-SemiBold'}}
+            className="uppercase font-bold tracking-wider text-lg"
+            style={{
+              fontFamily: 'SpaceGrotesk-Bold',
+              color: colors.primary,
+            }}
           >
-            CHAT
+            Messages
           </Text>
         </View>
 
@@ -135,6 +144,7 @@ export default function ChatScreen() {
                   style={{
                     width: hp(7),
                     height: hp(7),
+                    position: 'relative',
                   }}
                 >
                   <Image
@@ -145,6 +155,17 @@ export default function ChatScreen() {
                     }}
                     className="rounded-full"
                   />
+                  {(item.unreadCount ?? 0) > 0 ? (
+                    <Badge
+                      count={item.unreadCount}
+                      size="small"
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        right: 0,
+                      }}
+                    />
+                  ) : null}
                 </View>
 
                 {/* Information */}
@@ -155,25 +176,24 @@ export default function ChatScreen() {
                   }}
                 >
                   <View className="flex-row justify-between items-center">
-                    <View className="flex-row justify-center">
+                    <View className="flex-row items-center">
                       <View className="flex-row">
-                        <Text
-                          className="font-bold text-base"
-                          style={{fontFamily: 'SpaceGrotesk-Bold'}}
-                        >
-                          {item.name}
-                          {', '}
-                        </Text>
                         <Text
                           className="font-bold text-base mr-1"
                           style={{fontFamily: 'SpaceGrotesk-Bold'}}
                         >
-                          {item.age}
+                          {item.name}, {item.age}
                         </Text>
                       </View>
+                      {item.verified && (
+                        <VerifiedBadge verified={item.verified} size={16} />
+                      )}
                       {item.isOnline && (
-                        <View className="justify-center items-center">
-                          <View className="w-2 h-2 bg-[#F26322] rounded-full ml-1 justify-center items-center" />
+                        <View className="justify-center items-center ml-2">
+                          <View
+                            className="w-2 h-2 rounded-full"
+                            style={{backgroundColor: colors.primary}}
+                          />
                         </View>
                       )}
                     </View>
@@ -189,6 +209,7 @@ export default function ChatScreen() {
                       className="font-semibold text-xs text-neutral-500"
                       style={{fontFamily: 'SpaceGrotesk-Medium'}}
                     >
+                      {item.sentByUser ? 'You: ' : ''}
                       {item.lastMessage.length > 45
                         ? item.lastMessage.slice(0, 45) + '...'
                         : item.lastMessage}

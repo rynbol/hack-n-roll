@@ -8,6 +8,7 @@ import {
 import React from 'react';
 import {CheckBadgeIcon} from 'react-native-heroicons/solid';
 import {LinearGradient} from 'expo-linear-gradient';
+import {colors} from '../constants/colors';
 
 const {width, height} = Dimensions.get('window');
 
@@ -37,7 +38,7 @@ export default function DatesCard({item, handleClick}: DatesCardProps) {
           source={item.imgUrl}
           style={{
             width: width * 0.8,
-            height: height * 0.75,
+            height: height * 0.55,
           }}
           resizeMode="cover"
           className="rounded-3xl"
@@ -60,29 +61,32 @@ export default function DatesCard({item, handleClick}: DatesCardProps) {
 
       <View className="absolute bottom-10 justify-start w-full items-start pl-4">
         <View className="flex-row justify-center items-center">
-          <Text className="text-2xl text-white font-bold">
-            {item.name} {item.lastName}
-            {', '}
+          <Text
+            className="text-2xl text-white font-bold"
+            style={{fontFamily: 'SpaceGrotesk-Bold'}}
+          >
+            {item.name} {item.lastName}, {item.age}
           </Text>
-          <Text className="text-2xl text-white font-bold mr-2">{item.age}</Text>
-          <CheckBadgeIcon size={25} color={'#3B82F6'} />
+          <CheckBadgeIcon size={25} color={colors.badgeBlue} style={{marginLeft: 8}} />
         </View>
 
         {/* Location */}
         <View className="flex-row justify-center items-center">
-          <Text className="text-lg text-white font-regular">
-            {item.city}
-            {', '}
-          </Text>
-          <Text className="text-lg text-white font-regular mr-2">
-            {item.country}
+          <Text
+            className="text-lg text-white font-regular"
+            style={{fontFamily: 'SpaceGrotesk-Regular'}}
+          >
+            {item.city}, {item.country}
           </Text>
         </View>
 
         {/* Major and University for student matching */}
         {item.major && (
           <View className="mt-2">
-            <Text className="text-base text-white/90 font-medium">
+            <Text
+              className="text-base text-white/90 font-medium"
+              style={{fontFamily: 'SpaceGrotesk-Medium'}}
+            >
               {item.major}
             </Text>
           </View>
@@ -94,6 +98,7 @@ export default function DatesCard({item, handleClick}: DatesCardProps) {
             <Text
               className="text-sm text-white/80 font-regular"
               numberOfLines={2}
+              style={{fontFamily: 'SpaceGrotesk-Regular'}}
             >
               {item.bio}
             </Text>

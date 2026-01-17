@@ -1,6 +1,7 @@
 # 🚀 Quick Start Guide - Double
 
 ## Prerequisites Checklist
+
 - [ ] Node.js 18+ installed
 - [ ] Supabase CLI installed
 - [ ] Xcode (for iOS Simulator)
@@ -24,16 +25,19 @@ cd "/Users/a737/Documents/double copy" && npm run dev --localhost
 ## What Just Happened?
 
 ✅ **Supabase** started on http://127.0.0.1:54321
+
 - Studio: http://127.0.0.1:54323
 - Database with 20 migrations applied
 - Storage bucket `profiles` ready
 
-✅ **Backend API** started on http://localhost:3000
+✅ **Backend API** started on http://localhost:3001
+
 - Express server with AI integration
-- Claude and OpenAI providers initialized
+- Gemini AI provider initialized
 - Profile/Student/AI routes active
 
 ✅ **Frontend** started on http://localhost:8081
+
 - Expo dev server running
 - iOS Simulator should open automatically
 - Hot reload enabled
@@ -41,21 +45,27 @@ cd "/Users/a737/Documents/double copy" && npm run dev --localhost
 ## Test It Out
 
 ### 1. Check Backend is Running
+
 ```bash
-curl http://localhost:3000/health
+curl http://localhost:3001/health
 ```
+
 Should return: `{"status":"ok","message":"Double API is running"}`
 
 ### 2. Test AI Providers
+
 ```bash
-curl http://localhost:3000/api/ai/providers
+curl http://localhost:3001/api/ai/providers
 ```
-Should list available providers (claude, openai)
+
+Should list available providers (gemini)
 
 ### 3. Check Database
+
 Open Supabase Studio: http://127.0.0.1:54323
 
 Navigate to:
+
 - **Table Editor** → See all tables
 - **SQL Editor** → Run queries
 - **Storage** → View `profiles` bucket
@@ -63,6 +73,7 @@ Navigate to:
 ### 4. Navigate the App
 
 On iOS Simulator:
+
 1. You'll see "Find Your Study Partner" welcome screen
 2. Tap "Get Started"
 3. Navigate through 3 tabs:
@@ -73,29 +84,34 @@ On iOS Simulator:
 ## Common Issues
 
 ### "icon.png not found"
+
 ✅ **FIXED** - All references updated to use `HeartIcon.png`
 
-### Port 3000 already in use
+### Port 3001 already in use
+
 ```bash
-lsof -ti:3000 | xargs kill -9
+lsof -ti:3001 | xargs kill -9
 ```
 
 ### Simulator not connecting to backend
+
 Make sure `/frontend/.env` has:
+
 ```env
-EXPO_PUBLIC_BACKEND_URL=http://localhost:3000
+EXPO_PUBLIC_BACKEND_URL=http://localhost:3001
 ```
 
 Then reload: Shake device → Press "Reload"
 
 ### No AI providers available
+
 Check backend logs - you should see:
+
 ```
-✓ Claude AI provider initialized
-✓ OpenAI provider initialized
+✓ Gemini AI provider initialized
 ```
 
-If not, add API keys to `/.env`
+If not, add your GEMINI_API_KEY to `/.env`
 
 ## What to Test Next
 
@@ -153,16 +169,19 @@ VALUES (
 ### Making Changes
 
 **Frontend:**
+
 - Edit files in `/frontend/src/`
 - Auto-reloads with hot reload
 - Check Metro bundler logs
 
 **Backend:**
+
 - Edit files in `/backend/`
 - Server auto-restarts with `--watch` flag
 - Check terminal logs
 
 **Database:**
+
 - Create migration: `supabase migration new name`
 - Apply: `supabase db reset`
 - Or use Studio UI
@@ -170,16 +189,19 @@ VALUES (
 ### Debugging
 
 **Frontend:**
+
 - Shake device → Debug Menu
 - Enable Remote JS Debugging
 - Console logs appear in Chrome DevTools
 
 **Backend:**
+
 - Check terminal output
 - Add `console.log()` statements
 - Use `curl` to test endpoints
 
 **Database:**
+
 - Supabase Studio → SQL Editor
 - Run queries directly
 - Check table contents
@@ -187,16 +209,19 @@ VALUES (
 ## Key Files Reference
 
 ### Configuration
+
 - `/.env` - Main environment variables
 - `/frontend/.env` - Frontend-specific vars
 - `/backend/server.js` - Express server entry
 
 ### Routes
+
 - `/backend/routes/profile.js` - Photo upload, AI generation
 - `/backend/routes/student.js` - Student info management
 - `/backend/routes/ai.js` - AI provider management
 
 ### Screens
+
 - `/frontend/src/app/index.tsx` - Welcome screen
 - `/frontend/src/app/(tabs)/home.tsx` - Discover/swipe
 - `/frontend/src/app/(tabs)/chat.tsx` - Chat list
@@ -204,6 +229,7 @@ VALUES (
 - `/frontend/src/app/chat/[id].tsx` - Chat details
 
 ### Hooks
+
 - `/frontend/src/hooks/useAuth.ts` - Authentication
 - `/frontend/src/hooks/useProfiles.ts` - Profile fetching/actions
 - `/frontend/src/hooks/useMatches.ts` - Matches
@@ -254,11 +280,11 @@ cd frontend && npx expo start -c
 supabase logs
 
 # Check running processes
-lsof -ti:3000  # Backend
+lsof -ti:3001  # Backend
 lsof -ti:8081  # Expo
 
 # Kill processes
-lsof -ti:3000 | xargs kill -9
+lsof -ti:3001 | xargs kill -9
 ```
 
 ---
