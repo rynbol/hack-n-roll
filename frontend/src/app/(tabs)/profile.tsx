@@ -1,4 +1,3 @@
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import {
@@ -397,46 +396,58 @@ export default function ProfileScreen() {
       {/* Bio Edit Modal */}
       <Modal
         visible={editingBio}
-        animationType="fade"
+        animationType="slide"
         transparent={true}
         onRequestClose={handleCancelBio}
-        statusBarTranslucent
       >
-        <View className="flex-1">
-          <BlurView intensity={50} tint="dark" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            className="flex-1 justify-center items-center"
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+        >
+          <Pressable
+            onPress={handleCancelBio}
+            style={{
+              flex: 1,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              justifyContent: 'flex-end',
+            }}
           >
             <Pressable
-              onPress={handleCancelBio}
-              style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-            />
-            <View
-              className="bg-white rounded-3xl mx-6"
-              style={{ width: wp(85), maxHeight: hp(60) }}
+              onPress={(e) => e.stopPropagation()}
+              style={{
+                backgroundColor: colors.white,
+                borderTopLeftRadius: 24,
+                borderTopRightRadius: 24,
+                paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+              }}
             >
-              <View className="items-center py-5 border-b" style={{ borderBottomColor: colors.border }}>
-                <Text
-                  className="text-lg font-bold"
-                  style={{ fontFamily: 'SpaceGrotesk-Bold', color: colors.textPrimary }}
-                >
+              {/* Handle bar */}
+              <View style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 8 }}>
+                <View style={{ width: 40, height: 4, backgroundColor: colors.border, borderRadius: 2 }} />
+              </View>
+
+              {/* Header */}
+              <View style={{ paddingHorizontal: 20, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+                <Text style={{ fontFamily: 'SpaceGrotesk-Bold', fontSize: 18, color: colors.textPrimary, textAlign: 'center' }}>
                   Edit About Me
                 </Text>
               </View>
 
-              <View className="px-5 py-5">
+              {/* Content */}
+              <View style={{ padding: 20 }}>
                 <TextInput
                   value={editedBio}
                   onChangeText={setEditedBio}
-                  className="border px-4 py-3 rounded-xl"
                   style={{
                     fontFamily: 'SpaceGrotesk-Regular',
                     fontSize: 14,
                     minHeight: 120,
                     textAlignVertical: 'top',
                     backgroundColor: colors.backgroundGray,
+                    borderWidth: 1,
                     borderColor: colors.border,
+                    borderRadius: 12,
+                    padding: 16,
                     color: colors.textPrimary,
                   }}
                   placeholder="Tell us about yourself..."
@@ -445,173 +456,205 @@ export default function ProfileScreen() {
                 />
               </View>
 
-              <View className="flex-row px-5 pb-5 pt-2">
+              {/* Buttons */}
+              <View style={{ flexDirection: 'row', paddingHorizontal: 20, gap: 12 }}>
                 <TouchableOpacity
                   onPress={handleCancelBio}
-                  className="flex-1 py-3.5 rounded-full mr-3"
-                  style={{ backgroundColor: colors.backgroundGray }}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 14,
+                    borderRadius: 12,
+                    backgroundColor: colors.backgroundGray,
+                    alignItems: 'center',
+                  }}
                 >
-                  <Text
-                    className="text-center font-semibold"
-                    style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15, color: colors.textPrimary }}
-                  >
+                  <Text style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15, color: colors.textPrimary }}>
                     Cancel
                   </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   onPress={handleSaveBio}
-                  className="flex-1 py-3.5 rounded-full"
-                  style={{ backgroundColor: colors.primary }}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 14,
+                    borderRadius: 12,
+                    backgroundColor: colors.primary,
+                    alignItems: 'center',
+                  }}
                 >
-                  <Text
-                    className="text-white text-center font-semibold"
-                    style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15 }}
-                  >
-                    Confirm
+                  <Text style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15, color: colors.white }}>
+                    Save
                   </Text>
                 </TouchableOpacity>
               </View>
-            </View>
-          </KeyboardAvoidingView>
-        </View>
+            </Pressable>
+          </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Major Edit Modal */}
       <Modal
         visible={editingMajor}
-        animationType="fade"
+        animationType="slide"
         transparent={true}
         onRequestClose={handleCancelMajor}
-        statusBarTranslucent
       >
-        <View className="flex-1">
-          <BlurView intensity={50} tint="dark" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            className="flex-1 justify-center items-center"
+        <Pressable
+          onPress={handleCancelMajor}
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            justifyContent: 'flex-end',
+          }}
+        >
+          <Pressable
+            onPress={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: colors.white,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+              maxHeight: hp(70),
+            }}
           >
-            <Pressable
-              onPress={handleCancelMajor}
-              style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-            />
-            <View
-              className="bg-white rounded-3xl mx-6"
-              style={{ width: wp(85), maxHeight: hp(70) }}
-            >
-              <View className="items-center py-5 border-b" style={{ borderBottomColor: colors.border }}>
-                <Text
-                  className="text-lg font-bold"
-                  style={{ fontFamily: 'SpaceGrotesk-Bold', color: colors.textPrimary }}
-                >
-                  Edit Major
-                </Text>
-              </View>
+            {/* Handle bar */}
+            <View style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 8 }}>
+              <View style={{ width: 40, height: 4, backgroundColor: colors.border, borderRadius: 2 }} />
+            </View>
 
-              <ScrollView
-                className="px-5 py-4"
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
-                style={{ maxHeight: hp(40) }}
-              >
-                {commonMajors.map((major, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    onPress={() => setEditedMajor(major)}
-                    className="rounded-xl px-4 py-3.5 mb-2"
+            {/* Header */}
+            <View style={{ paddingHorizontal: 20, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+              <Text style={{ fontFamily: 'SpaceGrotesk-Bold', fontSize: 18, color: colors.textPrimary, textAlign: 'center' }}>
+                Edit Major
+              </Text>
+            </View>
+
+            {/* Content */}
+            <ScrollView
+              style={{ maxHeight: hp(40) }}
+              contentContainerStyle={{ padding: 20 }}
+              showsVerticalScrollIndicator={false}
+            >
+              {commonMajors.map((major, index) => (
+                <TouchableOpacity
+                  key={index}
+                  onPress={() => setEditedMajor(major)}
+                  style={{
+                    backgroundColor: editedMajor === major ? `${colors.primary}15` : colors.backgroundGray,
+                    borderWidth: 1.5,
+                    borderColor: editedMajor === major ? colors.primary : colors.border,
+                    borderRadius: 12,
+                    padding: 16,
+                    marginBottom: 10,
+                  }}
+                >
+                  <Text
                     style={{
-                      backgroundColor: editedMajor === major ? `${colors.primary}15` : colors.backgroundGray,
-                      borderWidth: 1.5,
-                      borderColor: editedMajor === major ? colors.primary : colors.border,
+                      fontFamily: 'SpaceGrotesk-Medium',
+                      fontSize: 15,
+                      color: editedMajor === major ? colors.primary : colors.textPrimary,
                     }}
                   >
-                    <Text
-                      style={{
-                        fontFamily: 'SpaceGrotesk-Medium',
-                        fontSize: 14,
-                        color: editedMajor === major ? colors.primary : colors.textPrimary,
-                      }}
-                    >
-                      {major}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-
-              <View className="flex-row px-5 pb-5 pt-2">
-                <TouchableOpacity
-                  onPress={handleCancelMajor}
-                  className="flex-1 py-3.5 rounded-full mr-3"
-                  style={{ backgroundColor: colors.backgroundGray }}
-                >
-                  <Text
-                    className="text-center font-semibold"
-                    style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15, color: colors.textPrimary }}
-                  >
-                    Cancel
+                    {major}
                   </Text>
                 </TouchableOpacity>
+              ))}
+            </ScrollView>
 
-                <TouchableOpacity
-                  onPress={handleSaveMajor}
-                  className="flex-1 py-3.5 rounded-full"
-                  style={{ backgroundColor: colors.primary }}
-                >
-                  <Text
-                    className="text-white text-center font-semibold"
-                    style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15 }}
-                  >
-                    Confirm
-                  </Text>
-                </TouchableOpacity>
-              </View>
+            {/* Buttons */}
+            <View style={{ flexDirection: 'row', paddingHorizontal: 20, paddingTop: 12, gap: 12 }}>
+              <TouchableOpacity
+                onPress={handleCancelMajor}
+                style={{
+                  flex: 1,
+                  paddingVertical: 14,
+                  borderRadius: 12,
+                  backgroundColor: colors.backgroundGray,
+                  alignItems: 'center',
+                }}
+              >
+                <Text style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15, color: colors.textPrimary }}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleSaveMajor}
+                style={{
+                  flex: 1,
+                  paddingVertical: 14,
+                  borderRadius: 12,
+                  backgroundColor: colors.primary,
+                  alignItems: 'center',
+                }}
+              >
+                <Text style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15, color: colors.white }}>
+                  Save
+                </Text>
+              </TouchableOpacity>
             </View>
-          </KeyboardAvoidingView>
-        </View>
+          </Pressable>
+        </Pressable>
       </Modal>
 
       {/* Classes Edit Modal */}
       <Modal
         visible={editingClasses}
-        animationType="fade"
+        animationType="slide"
         transparent={true}
         onRequestClose={handleCancelClasses}
-        statusBarTranslucent
       >
-        <View className="flex-1">
-          <BlurView intensity={50} tint="dark" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            className="flex-1 justify-center items-center"
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+        >
+          <Pressable
+            onPress={handleCancelClasses}
+            style={{
+              flex: 1,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              justifyContent: 'flex-end',
+            }}
           >
             <Pressable
-              onPress={handleCancelClasses}
-              style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-            />
-            <View
-              className="bg-white rounded-3xl mx-6"
-              style={{ width: wp(85), maxHeight: hp(60) }}
+              onPress={(e) => e.stopPropagation()}
+              style={{
+                backgroundColor: colors.white,
+                borderTopLeftRadius: 24,
+                borderTopRightRadius: 24,
+                paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+              }}
             >
-              <View className="items-center py-5 border-b" style={{ borderBottomColor: colors.border }}>
-                <Text
-                  className="text-lg font-bold"
-                  style={{ fontFamily: 'SpaceGrotesk-Bold', color: colors.textPrimary }}
-                >
+              {/* Handle bar */}
+              <View style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 8 }}>
+                <View style={{ width: 40, height: 4, backgroundColor: colors.border, borderRadius: 2 }} />
+              </View>
+
+              {/* Header */}
+              <View style={{ paddingHorizontal: 20, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+                <Text style={{ fontFamily: 'SpaceGrotesk-Bold', fontSize: 18, color: colors.textPrimary, textAlign: 'center' }}>
                   Edit Classes
                 </Text>
               </View>
 
-              <View className="px-5 py-4">
-                <View className="flex-row mb-4">
+              {/* Content */}
+              <View style={{ padding: 20 }}>
+                {/* Input row */}
+                <View style={{ flexDirection: 'row', marginBottom: 16 }}>
                   <TextInput
                     value={newClass}
                     onChangeText={setNewClass}
-                    className="border px-4 py-2.5 rounded-xl flex-1 mr-2"
                     style={{
+                      flex: 1,
                       fontFamily: 'SpaceGrotesk-Regular',
                       fontSize: 14,
                       backgroundColor: colors.backgroundGray,
+                      borderWidth: 1,
                       borderColor: colors.border,
+                      borderRadius: 12,
+                      padding: 14,
+                      marginRight: 10,
                       color: colors.textPrimary,
                     }}
                     placeholder="Add a class (e.g., CS 506)"
@@ -620,114 +663,142 @@ export default function ProfileScreen() {
                   />
                   <TouchableOpacity
                     onPress={handleAddClass}
-                    className="rounded-xl px-4 justify-center"
-                    style={{ backgroundColor: colors.primary }}
+                    style={{
+                      backgroundColor: colors.primary,
+                      borderRadius: 12,
+                      paddingHorizontal: 16,
+                      justifyContent: 'center',
+                    }}
                   >
-                    <PlusIcon size={20} color="white" strokeWidth={2.5} />
+                    <PlusIcon size={22} color="white" strokeWidth={2.5} />
                   </TouchableOpacity>
                 </View>
 
-                <View className="flex-row flex-wrap">
+                {/* Tags */}
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', minHeight: 50 }}>
                   {editedClasses.map((course, index) => (
                     <TouchableOpacity
                       key={index}
                       onPress={() => handleRemoveClass(course)}
-                      className="rounded-full px-3 py-1 mr-2 mb-2 flex-row items-center"
-                      style={{ backgroundColor: `${colors.primary}15` }}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        backgroundColor: `${colors.primary}15`,
+                        borderRadius: 20,
+                        paddingVertical: 8,
+                        paddingLeft: 14,
+                        paddingRight: 10,
+                        marginRight: 8,
+                        marginBottom: 8,
+                      }}
                     >
-                      <Text
-                        className="text-sm mr-1"
-                        style={{ fontFamily: 'SpaceGrotesk-Medium', color: colors.primary }}
-                      >
+                      <Text style={{ fontFamily: 'SpaceGrotesk-Medium', fontSize: 14, color: colors.primary, marginRight: 6 }}>
                         {course}
                       </Text>
-                      <XMarkIcon size={12} color={colors.primary} strokeWidth={2.5} />
+                      <XMarkIcon size={14} color={colors.primary} strokeWidth={2.5} />
                     </TouchableOpacity>
                   ))}
                 </View>
 
-                <Text
-                  className="text-xs mt-2"
-                  style={{ fontFamily: 'SpaceGrotesk-Regular', color: colors.textSecondary }}
-                >
+                <Text style={{ fontFamily: 'SpaceGrotesk-Regular', fontSize: 12, color: colors.textSecondary, marginTop: 8 }}>
                   Tap a class to remove it
                 </Text>
               </View>
 
-              <View className="flex-row px-5 pb-5 pt-2">
+              {/* Buttons */}
+              <View style={{ flexDirection: 'row', paddingHorizontal: 20, gap: 12 }}>
                 <TouchableOpacity
                   onPress={handleCancelClasses}
-                  className="flex-1 py-3.5 rounded-full mr-3"
-                  style={{ backgroundColor: colors.backgroundGray }}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 14,
+                    borderRadius: 12,
+                    backgroundColor: colors.backgroundGray,
+                    alignItems: 'center',
+                  }}
                 >
-                  <Text
-                    className="text-center font-semibold"
-                    style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15, color: colors.textPrimary }}
-                  >
+                  <Text style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15, color: colors.textPrimary }}>
                     Cancel
                   </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   onPress={handleSaveClasses}
-                  className="flex-1 py-3.5 rounded-full"
-                  style={{ backgroundColor: colors.primary }}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 14,
+                    borderRadius: 12,
+                    backgroundColor: colors.primary,
+                    alignItems: 'center',
+                  }}
                 >
-                  <Text
-                    className="text-white text-center font-semibold"
-                    style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15 }}
-                  >
-                    Confirm
+                  <Text style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15, color: colors.white }}>
+                    Save
                   </Text>
                 </TouchableOpacity>
               </View>
-            </View>
-          </KeyboardAvoidingView>
-        </View>
+            </Pressable>
+          </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Interests Edit Modal */}
       <Modal
         visible={editingInterests}
-        animationType="fade"
+        animationType="slide"
         transparent={true}
         onRequestClose={handleCancelInterests}
-        statusBarTranslucent
       >
-        <View className="flex-1">
-          <BlurView intensity={50} tint="dark" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            className="flex-1 justify-center items-center"
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+        >
+          <Pressable
+            onPress={handleCancelInterests}
+            style={{
+              flex: 1,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              justifyContent: 'flex-end',
+            }}
           >
             <Pressable
-              onPress={handleCancelInterests}
-              style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-            />
-            <View
-              className="bg-white rounded-3xl mx-6"
-              style={{ width: wp(85), maxHeight: hp(60) }}
+              onPress={(e) => e.stopPropagation()}
+              style={{
+                backgroundColor: colors.white,
+                borderTopLeftRadius: 24,
+                borderTopRightRadius: 24,
+                paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+              }}
             >
-              <View className="items-center py-5 border-b" style={{ borderBottomColor: colors.border }}>
-                <Text
-                  className="text-lg font-bold"
-                  style={{ fontFamily: 'SpaceGrotesk-Bold', color: colors.textPrimary }}
-                >
+              {/* Handle bar */}
+              <View style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 8 }}>
+                <View style={{ width: 40, height: 4, backgroundColor: colors.border, borderRadius: 2 }} />
+              </View>
+
+              {/* Header */}
+              <View style={{ paddingHorizontal: 20, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+                <Text style={{ fontFamily: 'SpaceGrotesk-Bold', fontSize: 18, color: colors.textPrimary, textAlign: 'center' }}>
                   Edit Interests
                 </Text>
               </View>
 
-              <View className="px-5 py-4">
-                <View className="flex-row mb-4">
+              {/* Content */}
+              <View style={{ padding: 20 }}>
+                {/* Input row */}
+                <View style={{ flexDirection: 'row', marginBottom: 16 }}>
                   <TextInput
                     value={newInterest}
                     onChangeText={setNewInterest}
-                    className="border px-4 py-2.5 rounded-xl flex-1 mr-2"
                     style={{
+                      flex: 1,
                       fontFamily: 'SpaceGrotesk-Regular',
                       fontSize: 14,
                       backgroundColor: colors.backgroundGray,
+                      borderWidth: 1,
                       borderColor: colors.border,
+                      borderRadius: 12,
+                      padding: 14,
+                      marginRight: 10,
                       color: colors.textPrimary,
                     }}
                     placeholder="Add an interest"
@@ -736,70 +807,83 @@ export default function ProfileScreen() {
                   />
                   <TouchableOpacity
                     onPress={handleAddInterest}
-                    className="rounded-xl px-4 justify-center"
-                    style={{ backgroundColor: colors.primary }}
+                    style={{
+                      backgroundColor: colors.primary,
+                      borderRadius: 12,
+                      paddingHorizontal: 16,
+                      justifyContent: 'center',
+                    }}
                   >
-                    <PlusIcon size={20} color="white" strokeWidth={2.5} />
+                    <PlusIcon size={22} color="white" strokeWidth={2.5} />
                   </TouchableOpacity>
                 </View>
 
-                <View className="flex-row flex-wrap">
+                {/* Tags */}
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', minHeight: 50 }}>
                   {editedInterests.map((interest, index) => (
                     <TouchableOpacity
                       key={index}
                       onPress={() => handleRemoveInterest(interest)}
-                      className="rounded-full px-3 py-1 mr-2 mb-2 flex-row items-center"
-                      style={{ backgroundColor: colors.backgroundGray }}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        backgroundColor: colors.backgroundGray,
+                        borderRadius: 20,
+                        paddingVertical: 8,
+                        paddingLeft: 14,
+                        paddingRight: 10,
+                        marginRight: 8,
+                        marginBottom: 8,
+                      }}
                     >
-                      <Text
-                        className="text-sm mr-1"
-                        style={{ fontFamily: 'SpaceGrotesk-Medium', color: colors.textSecondary }}
-                      >
+                      <Text style={{ fontFamily: 'SpaceGrotesk-Medium', fontSize: 14, color: colors.textSecondary, marginRight: 6 }}>
                         {interest}
                       </Text>
-                      <XMarkIcon size={12} color={colors.textSecondary} strokeWidth={2.5} />
+                      <XMarkIcon size={14} color={colors.textSecondary} strokeWidth={2.5} />
                     </TouchableOpacity>
                   ))}
                 </View>
 
-                <Text
-                  className="text-xs mt-2"
-                  style={{ fontFamily: 'SpaceGrotesk-Regular', color: colors.textSecondary }}
-                >
+                <Text style={{ fontFamily: 'SpaceGrotesk-Regular', fontSize: 12, color: colors.textSecondary, marginTop: 8 }}>
                   Tap an interest to remove it
                 </Text>
               </View>
 
-              <View className="flex-row px-5 pb-5 pt-2">
+              {/* Buttons */}
+              <View style={{ flexDirection: 'row', paddingHorizontal: 20, gap: 12 }}>
                 <TouchableOpacity
                   onPress={handleCancelInterests}
-                  className="flex-1 py-3.5 rounded-full mr-3"
-                  style={{ backgroundColor: colors.backgroundGray }}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 14,
+                    borderRadius: 12,
+                    backgroundColor: colors.backgroundGray,
+                    alignItems: 'center',
+                  }}
                 >
-                  <Text
-                    className="text-center font-semibold"
-                    style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15, color: colors.textPrimary }}
-                  >
+                  <Text style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15, color: colors.textPrimary }}>
                     Cancel
                   </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   onPress={handleSaveInterests}
-                  className="flex-1 py-3.5 rounded-full"
-                  style={{ backgroundColor: colors.primary }}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 14,
+                    borderRadius: 12,
+                    backgroundColor: colors.primary,
+                    alignItems: 'center',
+                  }}
                 >
-                  <Text
-                    className="text-white text-center font-semibold"
-                    style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15 }}
-                  >
-                    Confirm
+                  <Text style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15, color: colors.white }}>
+                    Save
                   </Text>
                 </TouchableOpacity>
               </View>
-            </View>
-          </KeyboardAvoidingView>
-        </View>
+            </Pressable>
+          </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );
