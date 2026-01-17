@@ -1,8 +1,9 @@
 import { BlurView } from 'expo-blur';
+import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import {
-  Dimensions,
+  ActivityIndicator, Alert, Dimensions,
   Image,
   KeyboardAvoidingView,
   Modal,
@@ -12,7 +13,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import {
   AcademicCapIcon,
@@ -24,8 +25,7 @@ import {
   UserIcon,
   XMarkIcon,
 } from 'react-native-heroicons/outline';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors } from '../../constants/colors';
+import { analyzeProfileImage } from '../../lib/imageAnalysis';
 
 const { width, height } = Dimensions.get('window');
 const hp = (percentage: number) => (height * percentage) / 100;
@@ -84,6 +84,61 @@ export default function ProfileScreen() {
   const [editedInterests, setEditedInterests] = useState<string[]>(user.interests);
   const [newClass, setNewClass] = useState('');
   const [newInterest, setNewInterest] = useState('');
+  const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<string | null>(null);
+
+  // Image picker handler
+  const handlePickImage = async () => {
+    try {
+      // Request permission
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      console.log("Permission result:", status);
+
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission Required',
+          'Please allow access to your photo library to upload a profile picture.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      // Launch image picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'] as any,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+      console.log("Picker result:", result);
+
+      if (!result.canceled && result.assets[0]) {
+        const imageUri = result.assets[0].uri;
+        setSelectedImageUri(imageUri);
+        setUser({ ...user, imgUrl: { uri: imageUri } });
+
+        // Analyze the image with LLM
+        setIsAnalyzing(true);
+        const analysis = await analyzeProfileImage(
+          imageUri,
+          'Analyze this profile photo and provide a brief, friendly description.'
+        );
+        setIsAnalyzing(false);
+
+        if (analysis.success && analysis.data) {
+          setAnalysisResult(analysis.data);
+          console.log('Image analysis result:', analysis.data);
+        } else {
+          console.error('Image analysis failed:', analysis.error);
+          Alert.alert('Analysis Failed', analysis.error || 'Could not analyze the image.');
+        }
+      }
+    } catch (e) {
+      console.error("Image picker error:", e);
+      Alert.alert("Error", String(e));
+    }
+  };
 
   // Bio handlers
   const handleSaveBio = () => {
@@ -158,7 +213,7 @@ export default function ProfileScreen() {
     title,
     icon: Icon,
     onEdit,
-    children,
+    children
   }: {
     title: string;
     icon: React.ComponentType<any>;
@@ -168,42 +223,42 @@ export default function ProfileScreen() {
     <View
       className="bg-white"
       style={{
-        borderRadius: 12,
+        borderRadius: 8,
         marginBottom: 12,
         borderWidth: 1,
-        borderColor: colors.border,
+        borderColor: '#E5E7EB',
       }}
     >
       <View
         className="flex-row items-center justify-between"
         style={{
-          paddingHorizontal: 16,
-          paddingVertical: 14,
+          paddingHorizontal: 14,
+          paddingVertical: 12,
           borderBottomWidth: 1,
-          borderBottomColor: colors.border,
+          borderBottomColor: '#E5E7EB',
         }}
       >
         <View className="flex-row items-center">
-          <Icon size={18} color={colors.primary} strokeWidth={2} />
+          <Icon size={18} color="#F26322" strokeWidth={2} />
           <Text
-            className="text-sm font-semibold ml-2"
-            style={{ fontFamily: 'SpaceGrotesk-SemiBold', color: colors.textPrimary }}
+            className="text-sm font-semibold text-gray-800 ml-2"
+            style={{ fontFamily: 'SpaceGrotesk-SemiBold' }}
           >
             {title}
           </Text>
         </View>
         <TouchableOpacity onPress={onEdit} className="p-1">
-          <PencilIcon size={16} color={colors.textSecondary} strokeWidth={2} />
+          <PencilIcon size={16} color="#9CA3AF" strokeWidth={2} />
         </TouchableOpacity>
       </View>
-      <View style={{ padding: 16 }}>
+      <View style={{ padding: 14 }}>
         {children}
       </View>
     </View>
   );
 
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: colors.backgroundGray }}>
+    <View className="flex-1 bg-gray-100">
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
@@ -212,15 +267,15 @@ export default function ProfileScreen() {
       >
         {/* Gradient Header */}
         <LinearGradient
-          colors={[colors.primary, colors.secondary]}
+          colors={['#F26322', '#FF8A5B']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={{ height: hp(18) }}
+          style={{ height: hp(20) }}
         >
-          <View className="flex-1 justify-center items-center pt-6">
+          <View className="flex-1 justify-center items-center pt-12">
             <Text
               className="text-white font-bold"
-              style={{ fontFamily: 'SpaceGrotesk-Bold', fontSize: 22 }}
+              style={{ fontFamily: 'SpaceGrotesk-Bold', fontSize: 20 }}
             >
               My Profile
             </Text>
@@ -228,56 +283,67 @@ export default function ProfileScreen() {
         </LinearGradient>
 
         {/* Profile Photo */}
-        <View className="items-center" style={{ marginTop: -hp(7) }}>
+        <View className="items-center" style={{ marginTop: -hp(8) }}>
           <View
             className="bg-white rounded-full items-center justify-center"
             style={{
-              width: wp(30),
-              height: wp(30),
-              borderWidth: 4,
-              borderColor: colors.white,
-              shadowColor: colors.black,
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.1,
-              shadowRadius: 8,
-              elevation: 4,
+              width: wp(28),
+              height: wp(28),
+              borderWidth: 3,
+              borderColor: '#fff',
             }}
           >
             <Image
               source={user.imgUrl}
               style={{
-                width: wp(28),
-                height: wp(28),
-                borderRadius: wp(14),
+                width: wp(26),
+                height: wp(26),
+                borderRadius: wp(13),
               }}
               resizeMode="cover"
             />
+            {isAnalyzing && (
+              <View
+                className="absolute items-center justify-center"
+                style={{
+                  width: wp(26),
+                  height: wp(26),
+                  borderRadius: wp(13),
+                  backgroundColor: 'rgba(0,0,0,0.5)',
+                }}
+              >
+                <ActivityIndicator size="large" color="#fff" />
+                <Text
+                  className="text-white text-xs mt-1"
+                  style={{ fontFamily: 'SpaceGrotesk-Medium' }}
+                >
+                  Analyzing...
+                </Text>
+              </View>
+            )}
             <TouchableOpacity
-              className="absolute bottom-0 right-0 rounded-full p-2"
-              style={{
-                backgroundColor: colors.primary,
-                borderWidth: 3,
-                borderColor: colors.white,
-              }}
+              className="absolute bottom-0 right-0 bg-[#F26322] rounded-full p-1.5"
+              onPress={handlePickImage}
+              disabled={isAnalyzing}
             >
-              <CameraIcon size={16} color="white" strokeWidth={2.5} />
+              <CameraIcon size={14} color="white" strokeWidth={2.5} />
             </TouchableOpacity>
           </View>
 
           {/* Name and Age */}
           <Text
-            className="text-2xl font-bold mt-3"
-            style={{ fontFamily: 'SpaceGrotesk-Bold', color: colors.textPrimary }}
+            className="text-2xl font-bold text-gray-900 mt-3"
+            style={{ fontFamily: 'SpaceGrotesk-Bold' }}
           >
             {user.name}, {user.age}
           </Text>
 
           {/* University */}
           <View className="flex-row items-center mt-1">
-            <AcademicCapIcon size={16} color={colors.textSecondary} strokeWidth={2} />
+            <AcademicCapIcon size={16} color="#6B7280" strokeWidth={2} />
             <Text
-              className="ml-1 text-sm"
-              style={{ fontFamily: 'SpaceGrotesk-Medium', color: colors.textSecondary }}
+              className="text-gray-500 ml-1 text-sm"
+              style={{ fontFamily: 'SpaceGrotesk-Medium' }}
             >
               {user.university}
             </Text>
@@ -285,46 +351,46 @@ export default function ProfileScreen() {
         </View>
 
         {/* Stats Cards */}
-        <View className="flex-row px-4 mt-5">
+        <View className="flex-row px-4 mt-4">
           <View
-            className="bg-white flex-1 items-center py-4 mr-2"
+            className="bg-white flex-1 items-center py-3 mr-1.5"
             style={{
-              borderRadius: 12,
+              borderRadius: 8,
               borderWidth: 1,
-              borderColor: colors.border,
+              borderColor: '#E5E7EB',
             }}
           >
             <Text
-              className="text-2xl font-bold"
-              style={{ fontFamily: 'SpaceGrotesk-Bold', color: colors.primary }}
+              className="text-xl font-bold text-[#F26322]"
+              style={{ fontFamily: 'SpaceGrotesk-Bold' }}
             >
               {user.classes.length}
             </Text>
             <Text
-              className="text-xs"
-              style={{ fontFamily: 'SpaceGrotesk-Regular', color: colors.textSecondary }}
+              className="text-gray-500 text-xs"
+              style={{ fontFamily: 'SpaceGrotesk-Regular' }}
             >
               Courses
             </Text>
           </View>
 
           <View
-            className="bg-white flex-1 items-center py-4 ml-2"
+            className="bg-white flex-1 items-center py-3 ml-1.5"
             style={{
-              borderRadius: 12,
+              borderRadius: 8,
               borderWidth: 1,
-              borderColor: colors.border,
+              borderColor: '#E5E7EB',
             }}
           >
             <Text
-              className="text-2xl font-bold"
-              style={{ fontFamily: 'SpaceGrotesk-Bold', color: colors.primary }}
+              className="text-xl font-bold text-[#F26322]"
+              style={{ fontFamily: 'SpaceGrotesk-Bold' }}
             >
               {user.interests.length}
             </Text>
             <Text
-              className="text-xs"
-              style={{ fontFamily: 'SpaceGrotesk-Regular', color: colors.textSecondary }}
+              className="text-gray-500 text-xs"
+              style={{ fontFamily: 'SpaceGrotesk-Regular' }}
             >
               Interests
             </Text>
@@ -332,12 +398,12 @@ export default function ProfileScreen() {
         </View>
 
         {/* Main Content */}
-        <View className="px-4 mt-5">
+        <View className="px-4 mt-4">
           {/* Bio Card */}
           <ProfileCard title="About Me" icon={UserIcon} onEdit={() => setEditingBio(true)}>
             <Text
-              className="leading-5"
-              style={{ fontFamily: 'SpaceGrotesk-Regular', fontSize: 14, color: colors.textSecondary }}
+              className="text-gray-600 leading-5"
+              style={{ fontFamily: 'SpaceGrotesk-Regular', fontSize: 14 }}
             >
               {user.bio}
             </Text>
@@ -346,7 +412,8 @@ export default function ProfileScreen() {
           {/* Major Card */}
           <ProfileCard title="Major" icon={AcademicCapIcon} onEdit={() => setEditingMajor(true)}>
             <Text
-              style={{ fontFamily: 'SpaceGrotesk-Medium', fontSize: 14, color: colors.textPrimary }}
+              className="text-gray-700"
+              style={{ fontFamily: 'SpaceGrotesk-Medium', fontSize: 14 }}
             >
               {user.major}
             </Text>
@@ -358,12 +425,12 @@ export default function ProfileScreen() {
               {user.classes.map((course, index) => (
                 <View
                   key={index}
-                  className="rounded-full px-3 py-1.5 mr-2 mb-2"
-                  style={{ backgroundColor: `${colors.primary}15` }}
+                  className="rounded-full px-3 py-1 mr-2 mb-1.5"
+                  style={{ backgroundColor: '#FEF3E2' }}
                 >
                   <Text
-                    className="text-sm"
-                    style={{ fontFamily: 'SpaceGrotesk-Medium', color: colors.primary }}
+                    className="text-[#EA580C] text-sm"
+                    style={{ fontFamily: 'SpaceGrotesk-Medium' }}
                   >
                     {course}
                   </Text>
@@ -378,12 +445,12 @@ export default function ProfileScreen() {
               {user.interests.map((interest, index) => (
                 <View
                   key={index}
-                  className="rounded-full px-3 py-1.5 mr-2 mb-2"
-                  style={{ backgroundColor: colors.backgroundGray }}
+                  className="rounded-full px-3 py-1 mr-2 mb-1.5"
+                  style={{ backgroundColor: '#F3F4F6' }}
                 >
                   <Text
-                    className="text-sm"
-                    style={{ fontFamily: 'SpaceGrotesk-Medium', color: colors.textSecondary }}
+                    className="text-gray-600 text-sm"
+                    style={{ fontFamily: 'SpaceGrotesk-Medium' }}
                   >
                     {interest}
                   </Text>
@@ -416,10 +483,10 @@ export default function ProfileScreen() {
               className="bg-white rounded-3xl mx-6"
               style={{ width: wp(85), maxHeight: hp(60) }}
             >
-              <View className="items-center py-5 border-b" style={{ borderBottomColor: colors.border }}>
+              <View className="items-center py-5 border-b border-gray-100">
                 <Text
-                  className="text-lg font-bold"
-                  style={{ fontFamily: 'SpaceGrotesk-Bold', color: colors.textPrimary }}
+                  className="text-lg font-bold text-gray-900"
+                  style={{ fontFamily: 'SpaceGrotesk-Bold' }}
                 >
                   Edit About Me
                 </Text>
@@ -429,18 +496,15 @@ export default function ProfileScreen() {
                 <TextInput
                   value={editedBio}
                   onChangeText={setEditedBio}
-                  className="border px-4 py-3 rounded-xl"
+                  className="bg-gray-50 border border-gray-200 px-4 py-3 rounded-xl text-gray-900"
                   style={{
                     fontFamily: 'SpaceGrotesk-Regular',
                     fontSize: 14,
                     minHeight: 120,
                     textAlignVertical: 'top',
-                    backgroundColor: colors.backgroundGray,
-                    borderColor: colors.border,
-                    color: colors.textPrimary,
                   }}
                   placeholder="Tell us about yourself..."
-                  placeholderTextColor={colors.textSecondary}
+                  placeholderTextColor="#9CA3AF"
                   multiline
                 />
               </View>
@@ -449,11 +513,11 @@ export default function ProfileScreen() {
                 <TouchableOpacity
                   onPress={handleCancelBio}
                   className="flex-1 py-3.5 rounded-full mr-3"
-                  style={{ backgroundColor: colors.backgroundGray }}
+                  style={{ backgroundColor: '#F3F4F6' }}
                 >
                   <Text
-                    className="text-center font-semibold"
-                    style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15, color: colors.textPrimary }}
+                    className="text-gray-700 text-center font-semibold"
+                    style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15 }}
                   >
                     Cancel
                   </Text>
@@ -462,7 +526,7 @@ export default function ProfileScreen() {
                 <TouchableOpacity
                   onPress={handleSaveBio}
                   className="flex-1 py-3.5 rounded-full"
-                  style={{ backgroundColor: colors.primary }}
+                  style={{ backgroundColor: '#3B82F6' }}
                 >
                   <Text
                     className="text-white text-center font-semibold"
@@ -499,10 +563,10 @@ export default function ProfileScreen() {
               className="bg-white rounded-3xl mx-6"
               style={{ width: wp(85), maxHeight: hp(70) }}
             >
-              <View className="items-center py-5 border-b" style={{ borderBottomColor: colors.border }}>
+              <View className="items-center py-5 border-b border-gray-100">
                 <Text
-                  className="text-lg font-bold"
-                  style={{ fontFamily: 'SpaceGrotesk-Bold', color: colors.textPrimary }}
+                  className="text-lg font-bold text-gray-900"
+                  style={{ fontFamily: 'SpaceGrotesk-Bold' }}
                 >
                   Edit Major
                 </Text>
@@ -520,16 +584,16 @@ export default function ProfileScreen() {
                     onPress={() => setEditedMajor(major)}
                     className="rounded-xl px-4 py-3.5 mb-2"
                     style={{
-                      backgroundColor: editedMajor === major ? `${colors.primary}15` : colors.backgroundGray,
+                      backgroundColor: editedMajor === major ? '#FEF3E2' : '#F9FAFB',
                       borderWidth: 1.5,
-                      borderColor: editedMajor === major ? colors.primary : colors.border,
+                      borderColor: editedMajor === major ? '#F26322' : '#E5E7EB',
                     }}
                   >
                     <Text
                       style={{
                         fontFamily: 'SpaceGrotesk-Medium',
                         fontSize: 14,
-                        color: editedMajor === major ? colors.primary : colors.textPrimary,
+                        color: editedMajor === major ? '#F26322' : '#374151',
                       }}
                     >
                       {major}
@@ -542,11 +606,11 @@ export default function ProfileScreen() {
                 <TouchableOpacity
                   onPress={handleCancelMajor}
                   className="flex-1 py-3.5 rounded-full mr-3"
-                  style={{ backgroundColor: colors.backgroundGray }}
+                  style={{ backgroundColor: '#F3F4F6' }}
                 >
                   <Text
-                    className="text-center font-semibold"
-                    style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15, color: colors.textPrimary }}
+                    className="text-gray-700 text-center font-semibold"
+                    style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15 }}
                   >
                     Cancel
                   </Text>
@@ -555,7 +619,7 @@ export default function ProfileScreen() {
                 <TouchableOpacity
                   onPress={handleSaveMajor}
                   className="flex-1 py-3.5 rounded-full"
-                  style={{ backgroundColor: colors.primary }}
+                  style={{ backgroundColor: '#3B82F6' }}
                 >
                   <Text
                     className="text-white text-center font-semibold"
@@ -592,10 +656,10 @@ export default function ProfileScreen() {
               className="bg-white rounded-3xl mx-6"
               style={{ width: wp(85), maxHeight: hp(60) }}
             >
-              <View className="items-center py-5 border-b" style={{ borderBottomColor: colors.border }}>
+              <View className="items-center py-5 border-b border-gray-100">
                 <Text
-                  className="text-lg font-bold"
-                  style={{ fontFamily: 'SpaceGrotesk-Bold', color: colors.textPrimary }}
+                  className="text-lg font-bold text-gray-900"
+                  style={{ fontFamily: 'SpaceGrotesk-Bold' }}
                 >
                   Edit Classes
                 </Text>
@@ -606,22 +670,15 @@ export default function ProfileScreen() {
                   <TextInput
                     value={newClass}
                     onChangeText={setNewClass}
-                    className="border px-4 py-2.5 rounded-xl flex-1 mr-2"
-                    style={{
-                      fontFamily: 'SpaceGrotesk-Regular',
-                      fontSize: 14,
-                      backgroundColor: colors.backgroundGray,
-                      borderColor: colors.border,
-                      color: colors.textPrimary,
-                    }}
+                    className="bg-gray-50 border border-gray-200 px-4 py-2.5 rounded-xl text-gray-900 flex-1 mr-2"
+                    style={{ fontFamily: 'SpaceGrotesk-Regular', fontSize: 14 }}
                     placeholder="Add a class (e.g., CS 506)"
-                    placeholderTextColor={colors.textSecondary}
+                    placeholderTextColor="#9CA3AF"
                     onSubmitEditing={handleAddClass}
                   />
                   <TouchableOpacity
                     onPress={handleAddClass}
-                    className="rounded-xl px-4 justify-center"
-                    style={{ backgroundColor: colors.primary }}
+                    className="bg-[#F26322] rounded-xl px-4 justify-center"
                   >
                     <PlusIcon size={20} color="white" strokeWidth={2.5} />
                   </TouchableOpacity>
@@ -633,22 +690,22 @@ export default function ProfileScreen() {
                       key={index}
                       onPress={() => handleRemoveClass(course)}
                       className="rounded-full px-3 py-1 mr-2 mb-2 flex-row items-center"
-                      style={{ backgroundColor: `${colors.primary}15` }}
+                      style={{ backgroundColor: '#FEF3E2' }}
                     >
                       <Text
-                        className="text-sm mr-1"
-                        style={{ fontFamily: 'SpaceGrotesk-Medium', color: colors.primary }}
+                        className="text-[#EA580C] text-sm mr-1"
+                        style={{ fontFamily: 'SpaceGrotesk-Medium' }}
                       >
                         {course}
                       </Text>
-                      <XMarkIcon size={12} color={colors.primary} strokeWidth={2.5} />
+                      <XMarkIcon size={12} color="#EA580C" strokeWidth={2.5} />
                     </TouchableOpacity>
                   ))}
                 </View>
 
                 <Text
-                  className="text-xs mt-2"
-                  style={{ fontFamily: 'SpaceGrotesk-Regular', color: colors.textSecondary }}
+                  className="text-xs text-gray-400 mt-2"
+                  style={{ fontFamily: 'SpaceGrotesk-Regular' }}
                 >
                   Tap a class to remove it
                 </Text>
@@ -658,11 +715,11 @@ export default function ProfileScreen() {
                 <TouchableOpacity
                   onPress={handleCancelClasses}
                   className="flex-1 py-3.5 rounded-full mr-3"
-                  style={{ backgroundColor: colors.backgroundGray }}
+                  style={{ backgroundColor: '#F3F4F6' }}
                 >
                   <Text
-                    className="text-center font-semibold"
-                    style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15, color: colors.textPrimary }}
+                    className="text-gray-700 text-center font-semibold"
+                    style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15 }}
                   >
                     Cancel
                   </Text>
@@ -671,7 +728,7 @@ export default function ProfileScreen() {
                 <TouchableOpacity
                   onPress={handleSaveClasses}
                   className="flex-1 py-3.5 rounded-full"
-                  style={{ backgroundColor: colors.primary }}
+                  style={{ backgroundColor: '#3B82F6' }}
                 >
                   <Text
                     className="text-white text-center font-semibold"
@@ -708,10 +765,10 @@ export default function ProfileScreen() {
               className="bg-white rounded-3xl mx-6"
               style={{ width: wp(85), maxHeight: hp(60) }}
             >
-              <View className="items-center py-5 border-b" style={{ borderBottomColor: colors.border }}>
+              <View className="items-center py-5 border-b border-gray-100">
                 <Text
-                  className="text-lg font-bold"
-                  style={{ fontFamily: 'SpaceGrotesk-Bold', color: colors.textPrimary }}
+                  className="text-lg font-bold text-gray-900"
+                  style={{ fontFamily: 'SpaceGrotesk-Bold' }}
                 >
                   Edit Interests
                 </Text>
@@ -722,22 +779,15 @@ export default function ProfileScreen() {
                   <TextInput
                     value={newInterest}
                     onChangeText={setNewInterest}
-                    className="border px-4 py-2.5 rounded-xl flex-1 mr-2"
-                    style={{
-                      fontFamily: 'SpaceGrotesk-Regular',
-                      fontSize: 14,
-                      backgroundColor: colors.backgroundGray,
-                      borderColor: colors.border,
-                      color: colors.textPrimary,
-                    }}
+                    className="bg-gray-50 border border-gray-200 px-4 py-2.5 rounded-xl text-gray-900 flex-1 mr-2"
+                    style={{ fontFamily: 'SpaceGrotesk-Regular', fontSize: 14 }}
                     placeholder="Add an interest"
-                    placeholderTextColor={colors.textSecondary}
+                    placeholderTextColor="#9CA3AF"
                     onSubmitEditing={handleAddInterest}
                   />
                   <TouchableOpacity
                     onPress={handleAddInterest}
-                    className="rounded-xl px-4 justify-center"
-                    style={{ backgroundColor: colors.primary }}
+                    className="bg-[#F26322] rounded-xl px-4 justify-center"
                   >
                     <PlusIcon size={20} color="white" strokeWidth={2.5} />
                   </TouchableOpacity>
@@ -749,22 +799,22 @@ export default function ProfileScreen() {
                       key={index}
                       onPress={() => handleRemoveInterest(interest)}
                       className="rounded-full px-3 py-1 mr-2 mb-2 flex-row items-center"
-                      style={{ backgroundColor: colors.backgroundGray }}
+                      style={{ backgroundColor: '#F3F4F6' }}
                     >
                       <Text
-                        className="text-sm mr-1"
-                        style={{ fontFamily: 'SpaceGrotesk-Medium', color: colors.textSecondary }}
+                        className="text-gray-600 text-sm mr-1"
+                        style={{ fontFamily: 'SpaceGrotesk-Medium' }}
                       >
                         {interest}
                       </Text>
-                      <XMarkIcon size={12} color={colors.textSecondary} strokeWidth={2.5} />
+                      <XMarkIcon size={12} color="#6B7280" strokeWidth={2.5} />
                     </TouchableOpacity>
                   ))}
                 </View>
 
                 <Text
-                  className="text-xs mt-2"
-                  style={{ fontFamily: 'SpaceGrotesk-Regular', color: colors.textSecondary }}
+                  className="text-xs text-gray-400 mt-2"
+                  style={{ fontFamily: 'SpaceGrotesk-Regular' }}
                 >
                   Tap an interest to remove it
                 </Text>
@@ -774,11 +824,11 @@ export default function ProfileScreen() {
                 <TouchableOpacity
                   onPress={handleCancelInterests}
                   className="flex-1 py-3.5 rounded-full mr-3"
-                  style={{ backgroundColor: colors.backgroundGray }}
+                  style={{ backgroundColor: '#F3F4F6' }}
                 >
                   <Text
-                    className="text-center font-semibold"
-                    style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15, color: colors.textPrimary }}
+                    className="text-gray-700 text-center font-semibold"
+                    style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15 }}
                   >
                     Cancel
                   </Text>
@@ -787,7 +837,7 @@ export default function ProfileScreen() {
                 <TouchableOpacity
                   onPress={handleSaveInterests}
                   className="flex-1 py-3.5 rounded-full"
-                  style={{ backgroundColor: colors.primary }}
+                  style={{ backgroundColor: '#3B82F6' }}
                 >
                   <Text
                     className="text-white text-center font-semibold"
@@ -801,6 +851,7 @@ export default function ProfileScreen() {
           </KeyboardAvoidingView>
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
+
