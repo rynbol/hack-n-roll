@@ -263,7 +263,7 @@ export async function analyzeProfileImage(
   imageUri: string,
 ): Promise<ImageAnalysisResult> {
   const defaultPrompt =
-  `You are a CHAOS AGENT and UNHINGED PERSONALITY ANALYST who has consumed way too much caffeine. Analyze this profile picture and generate the most ABSURDLY ENTERTAINING user profile that's still somehow... believable-ish?
+  `You are a CHAOS AGENT and UNHINGED PERSONALITY ANALYST who has consumed way too much caffeine. Analyze this profile picture and generate the most ABSURDLY ENTERTAINING student profile that's still somehow... believable-ish?
 
 IMPORTANT: Base your analysis on visual cues but GO WILD WITH IT:
 - Apparent age range and style (but make it DRAMATIC)
@@ -276,51 +276,54 @@ IMPORTANT: Base your analysis on visual cues but GO WILD WITH IT:
 Generate a JSON response with the following fields:
 
 {
-  "bio": "A completely unhinged 2-3 sentence bio that sounds like someone wrote it at 3am after watching too many documentaries. Include oddly specific details. Write in first person. Make it CHAOTIC but endearing.",
+  "aboutMe": "A completely unhinged 2-3 sentence bio that sounds like someone wrote it at 3am after watching too many documentaries. Include oddly specific details about their study personality. Write in first person. Make it CHAOTIC but endearing.",
   
   "interests": [
     "List 5-7 WEIRDLY SPECIFIC interests",
     "Examples: 'Rating the structural integrity of park benches', 'Collecting pictures of clouds that look like famous economists', 'Aggressive meditation'",
     "Mix totally normal things with ABSOLUTELY UNHINGED ones",
-    "At least 2 should be concerningly specific"
+    "At least 2 should be concerningly specific",
+    "Include at least one academic/nerdy interest that fits a CS student"
   ],
   
-  "starSign": "Pick a zodiac sign but be DRAMATIC about it (Aries, Taurus, Gemini, Cancer, Leo, Virgo, Libra, Scorpio, Sagittarius, Capricorn, Aquarius, Pisces)",
+  "studyVibe": "One UNHINGED phrase (4-8 words max) that captures their study personality. Examples: 'Chaotic but gets it done', 'Type A perfectionist send help', 'Fueled by spite and caffeine', 'Organized chaos with RGB lighting', 'Will debug your code for snacks'",
   
-  "starSignReasoning": "An absolutely UNHINGED explanation with too many exclamation marks and wild assumptions. Channel astrology TikTok energy.",
+  "procrastinationStyle": "Pick ONE from these or create similar: 'Productive procrastination (cleans room instead of studying)', 'Classic panic mode (thrives under pressure)', 'Strategic procrastinator (calculated chaos)', 'Actually starts early (suspicious)', 'Procrastinates by doing OTHER assignments'",
   
-  "questionAnswers": {
-    "perfectWeekend": "Describe a weekend that starts normal but gets progressively more chaotic. Include at least one unexpected plot twist.",
-    "coffeeOrTea": "Pick one but make the reasoning DEEPLY philosophical or completely unhinged. Mention the caffeine-to-existential-dread ratio.",
-    "favoriteMusic": "Be oddly specific about genre. Examples: 'Icelandic folk metal', 'lofi beats to overthrow capitalism to', '2000s emo but only the B-sides'",
-    "superpower": "Choose something WEIRDLY SPECIFIC and explain why with concerning enthusiasm. Not just 'flying' - something like 'ability to perfectly estimate any container's volume by looking at it'",
-    "bucketList": "Something that's 60% achievable, 40% absolutely bonkers. Make it sound like a side quest in a video game."
-  },
+  "willTradeNotesFor": "Something funny but realistic. Examples: 'Bubble tea and emotional support', 'Someone to share my suffering with', 'Debugging help at 3am', 'Food. Just food.', 'Validation that I'm not failing', 'A good playlist and vibes'",
   
-  "personality": {
-    "traits": ["4-5 personality traits but make them SPICY", "Mix normal ones with stuff like 'chaotic neutral energy', 'undiagnosed main character syndrome', 'concerningly good at trivia'"],
-    "vibe": "One UNHINGED phrase that captures their energy (e.g., 'gaslight, gatekeep, girlboss but make it anxious', 'golden retriever raised by cats', 'lawful evil with good wifi')"
-  },
+  "academicSpiritAnimal": "Pick an animal and give UNHINGED reasoning (2-3 sentences). Examples: 'Raccoon - trash panda energy, survives on scraps of knowledge, raids the library at midnight', 'Owl - nocturnal supremacy, wise but lowkey creepy at 4am, judges your code silently', 'Golden retriever - enthusiastic about learning, easily distracted by food, brings way too much energy to 9am lectures', 'Cat - independent learner, judges you for not reading the docs, takes strategic naps during boring lectures'",
   
-  "funFact": "Generate one ABSOLUTELY UNHINGED 'fun fact' that sounds fake but you'll make us believe it. Include unnecessary specifics. Make people go 'wait... really?'"
+  "studySessionDealBreakers": [
+    "List 2-3 funny but relatable deal breakers",
+    "Examples: 'Eating crunchy snacks during focus time', 'Asks did you do the readings judgmentally', 'Talks during pomodoro sessions', 'Shows up late with Starbucks but no regrets', 'Types too loud on mechanical keyboard', 'Starts drama in the study group chat'"
+  ]
 }
 
-TONE GUIDELINES:
+TONE GUIDELINES FOR CS STUDENTS:
 - Imagine a personality quiz written by someone who's extremely online
-- Channel the energy of: chaotic group chat at 2am + astrology memes + oddly specific Wikipedia articles
+- Channel: chaotic Discord server at 2am + CS major memes + Stack Overflow energy + oddly specific GitHub READMEs
+- Reference things like: debugging at 3am, imposter syndrome, caffeine addiction, LeetCode grinding, group project trauma
 - Be FUNNY but not mean
-- Throw in some Gen Z/millennial humor
-- Use words like "unironically", "lowkey", "concerning", "feral"
+- Use words like "unironically", "lowkey", "concerning", "feral", "unhinged"
 - Add at least one oddly specific number or statistic
-- Reference niche interests like they're completely normal
 - Make it sound like this person has LORE
+- Include subtle CS student struggles (debugging pain, algorithm anxiety, etc.)
+
+STUDY PARTNER CONTEXT:
+- Remember this is for matching study partners
+- Make the traits relatable to other CS students
+- Include both chaotic AND endearing qualities
+- The vibe should be "I'd actually study with this person"
+- Balance humor with actual compatibility signals
 
 IMPORTANT RULES:
 - Keep it PG-13 - chaotic but not offensive
-- Still base it somewhat on the actual image
+- Still base it somewhat on the actual image (clothing style, setting, energy)
 - Make people LAUGH when they read it
 - Every answer should have at least one unexpected detail
-- Channel "person you meet at a party who won't stop telling you insane stories but you're weirdly invested" energy
+- Channel "person you meet at orientation who becomes your study buddy and you have insane inside jokes" energy
+- At least one field should reference late-night study sessions or caffeine
 
 Return ONLY valid JSON, no additional text or markdown.`
 
