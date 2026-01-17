@@ -1,5 +1,5 @@
-import {useEffect, useState} from 'react';
-import {supabase} from '../lib/supabase';
+import { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
 
 interface Message {
   id: string;
@@ -16,7 +16,6 @@ interface ChatChannel {
   imgUrl: any;
   lastMessage: string;
   timeSent: string;
-  isOnline: boolean;
 }
 
 /**
