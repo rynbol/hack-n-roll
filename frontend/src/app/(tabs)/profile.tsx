@@ -121,8 +121,7 @@ export default function ProfileScreen() {
         // Analyze the image with LLM
         setIsAnalyzing(true);
         const analysis = await analyzeProfileImage(
-          imageUri,
-          'Analyze this profile photo and provide a brief, friendly description.'
+          imageUri
         );
         setIsAnalyzing(false);
 
