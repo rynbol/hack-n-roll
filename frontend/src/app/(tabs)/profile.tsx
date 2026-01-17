@@ -1,4 +1,3 @@
-import { BlurView } from 'expo-blur';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
@@ -19,12 +18,18 @@ import {
   AcademicCapIcon,
   BookOpenIcon,
   CameraIcon,
+  ClockIcon,
+  FireIcon,
+  HandRaisedIcon,
+  HeartIcon,
   PencilIcon,
   PlusIcon,
   SparklesIcon,
   UserIcon,
   XMarkIcon,
 } from 'react-native-heroicons/outline';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { colors } from '../../constants/colors';
 import { analyzeProfileImage } from '../../lib/imageAnalysis';
 
 const { width, height } = Dimensions.get('window');
@@ -41,6 +46,11 @@ interface UserProfile {
   major: string;
   classes: string[];
   interests: string[];
+  studyVibe?: string;
+  procrastinationStyle?: string;
+  willTradeNotesFor?: string;
+  academicSpiritAnimal?: string;
+  studySessionDealBreakers?: string[];
 }
 
 // Mock user profile
@@ -88,7 +98,6 @@ export default function ProfileScreen() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
 
-  // Image picker handler
   const handlePickImage = async () => {
     try {
       // Request permission
@@ -128,6 +137,45 @@ export default function ProfileScreen() {
         if (analysis.success && analysis.data) {
           setAnalysisResult(analysis.data);
           console.log('Image analysis result:', analysis.data);
+
+          // Parse the JSON response and update profile
+          try {
+            let jsonString = analysis.data;
+
+            // Remove markdown code blocks if present
+            jsonString = jsonString.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+
+            // Try to extract JSON object if there's extra text
+            const jsonMatch = jsonString.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              jsonString = jsonMatch[0];
+            }
+
+            console.log('Attempting to parse JSON:', jsonString);
+            const parsedData = JSON.parse(jsonString);
+
+            // Update user profile with all new fields
+            setUser(prev => ({
+              ...prev,
+              bio: parsedData.aboutMe || parsedData['About Me'] || prev.bio,
+              interests: parsedData.interests || prev.interests,
+              studyVibe: parsedData.studyVibe,
+              procrastinationStyle: parsedData.procrastinationStyle,
+              willTradeNotesFor: parsedData.willTradeNotesFor,
+              academicSpiritAnimal: parsedData.academicSpiritAnimal,
+              studySessionDealBreakers: parsedData.studySessionDealBreakers,
+            }));
+
+            // Update edited values
+            setEditedBio(parsedData.aboutMe || parsedData['About Me'] || user.bio);
+            setEditedInterests(parsedData.interests || user.interests);
+
+            Alert.alert('Profile Updated!', 'Your profile has been generated from your photo.');
+          } catch (parseError) {
+            console.error('Error parsing analysis result:', parseError);
+            console.error('Raw data:', analysis.data);
+            Alert.alert('Analysis Complete', 'Image analyzed but could not parse the result. Check console for details.');
+          }
         } else {
           console.error('Image analysis failed:', analysis.error);
           Alert.alert('Analysis Failed', analysis.error || 'Could not analyze the image.');
@@ -212,7 +260,7 @@ export default function ProfileScreen() {
     title,
     icon: Icon,
     onEdit,
-    children
+    children,
   }: {
     title: string;
     icon: React.ComponentType<any>;
@@ -222,42 +270,42 @@ export default function ProfileScreen() {
     <View
       className="bg-white"
       style={{
-        borderRadius: 8,
+        borderRadius: 12,
         marginBottom: 12,
         borderWidth: 1,
-        borderColor: '#E5E7EB',
+        borderColor: colors.border,
       }}
     >
       <View
         className="flex-row items-center justify-between"
         style={{
-          paddingHorizontal: 14,
-          paddingVertical: 12,
+          paddingHorizontal: 16,
+          paddingVertical: 14,
           borderBottomWidth: 1,
-          borderBottomColor: '#E5E7EB',
+          borderBottomColor: colors.border,
         }}
       >
         <View className="flex-row items-center">
-          <Icon size={18} color="#F26322" strokeWidth={2} />
+          <Icon size={18} color={colors.primary} strokeWidth={2} />
           <Text
-            className="text-sm font-semibold text-gray-800 ml-2"
-            style={{ fontFamily: 'SpaceGrotesk-SemiBold' }}
+            className="text-sm font-semibold ml-2"
+            style={{ fontFamily: 'SpaceGrotesk-SemiBold', color: colors.textPrimary }}
           >
             {title}
           </Text>
         </View>
         <TouchableOpacity onPress={onEdit} className="p-1">
-          <PencilIcon size={16} color="#9CA3AF" strokeWidth={2} />
+          <PencilIcon size={16} color={colors.textSecondary} strokeWidth={2} />
         </TouchableOpacity>
       </View>
-      <View style={{ padding: 14 }}>
+      <View style={{ padding: 16 }}>
         {children}
       </View>
     </View>
   );
 
   return (
-    <View className="flex-1 bg-gray-100">
+    <SafeAreaView className="flex-1" style={{ backgroundColor: colors.backgroundGray }}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
@@ -266,15 +314,15 @@ export default function ProfileScreen() {
       >
         {/* Gradient Header */}
         <LinearGradient
-          colors={['#F26322', '#FF8A5B']}
+          colors={[colors.primary, colors.secondary]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={{ height: hp(20) }}
+          style={{ height: hp(18) }}
         >
-          <View className="flex-1 justify-center items-center pt-12">
+          <View className="flex-1 justify-center items-center pt-6">
             <Text
               className="text-white font-bold"
-              style={{ fontFamily: 'SpaceGrotesk-Bold', fontSize: 20 }}
+              style={{ fontFamily: 'SpaceGrotesk-Bold', fontSize: 22 }}
             >
               My Profile
             </Text>
@@ -350,46 +398,46 @@ export default function ProfileScreen() {
         </View>
 
         {/* Stats Cards */}
-        <View className="flex-row px-4 mt-4">
+        <View className="flex-row px-4 mt-5">
           <View
-            className="bg-white flex-1 items-center py-3 mr-1.5"
+            className="bg-white flex-1 items-center py-4 mr-2"
             style={{
-              borderRadius: 8,
+              borderRadius: 12,
               borderWidth: 1,
-              borderColor: '#E5E7EB',
+              borderColor: colors.border,
             }}
           >
             <Text
-              className="text-xl font-bold text-[#F26322]"
-              style={{ fontFamily: 'SpaceGrotesk-Bold' }}
+              className="text-2xl font-bold"
+              style={{ fontFamily: 'SpaceGrotesk-Bold', color: colors.primary }}
             >
               {user.classes.length}
             </Text>
             <Text
-              className="text-gray-500 text-xs"
-              style={{ fontFamily: 'SpaceGrotesk-Regular' }}
+              className="text-xs"
+              style={{ fontFamily: 'SpaceGrotesk-Regular', color: colors.textSecondary }}
             >
               Courses
             </Text>
           </View>
 
           <View
-            className="bg-white flex-1 items-center py-3 ml-1.5"
+            className="bg-white flex-1 items-center py-4 ml-2"
             style={{
-              borderRadius: 8,
+              borderRadius: 12,
               borderWidth: 1,
-              borderColor: '#E5E7EB',
+              borderColor: colors.border,
             }}
           >
             <Text
-              className="text-xl font-bold text-[#F26322]"
-              style={{ fontFamily: 'SpaceGrotesk-Bold' }}
+              className="text-2xl font-bold"
+              style={{ fontFamily: 'SpaceGrotesk-Bold', color: colors.primary }}
             >
               {user.interests.length}
             </Text>
             <Text
-              className="text-gray-500 text-xs"
-              style={{ fontFamily: 'SpaceGrotesk-Regular' }}
+              className="text-xs"
+              style={{ fontFamily: 'SpaceGrotesk-Regular', color: colors.textSecondary }}
             >
               Interests
             </Text>
@@ -397,12 +445,12 @@ export default function ProfileScreen() {
         </View>
 
         {/* Main Content */}
-        <View className="px-4 mt-4">
+        <View className="px-4 mt-5">
           {/* Bio Card */}
           <ProfileCard title="About Me" icon={UserIcon} onEdit={() => setEditingBio(true)}>
             <Text
-              className="text-gray-600 leading-5"
-              style={{ fontFamily: 'SpaceGrotesk-Regular', fontSize: 14 }}
+              className="leading-5"
+              style={{ fontFamily: 'SpaceGrotesk-Regular', fontSize: 14, color: colors.textSecondary }}
             >
               {user.bio}
             </Text>
@@ -411,8 +459,7 @@ export default function ProfileScreen() {
           {/* Major Card */}
           <ProfileCard title="Major" icon={AcademicCapIcon} onEdit={() => setEditingMajor(true)}>
             <Text
-              className="text-gray-700"
-              style={{ fontFamily: 'SpaceGrotesk-Medium', fontSize: 14 }}
+              style={{ fontFamily: 'SpaceGrotesk-Regular', fontSize: 14, color: colors.textSecondary }}
             >
               {user.major}
             </Text>
@@ -424,12 +471,12 @@ export default function ProfileScreen() {
               {user.classes.map((course, index) => (
                 <View
                   key={index}
-                  className="rounded-full px-3 py-1 mr-2 mb-1.5"
-                  style={{ backgroundColor: '#FEF3E2' }}
+                  className="rounded-full px-3 py-1.5 mr-2 mb-2"
+                  style={{ backgroundColor: `${colors.primary}15` }}
                 >
                   <Text
-                    className="text-[#EA580C] text-sm"
-                    style={{ fontFamily: 'SpaceGrotesk-Medium' }}
+                    className="text-sm"
+                    style={{ fontFamily: 'SpaceGrotesk-Regular', color: colors.primary }}
                   >
                     {course}
                   </Text>
@@ -444,12 +491,14 @@ export default function ProfileScreen() {
               {user.interests.map((interest, index) => (
                 <View
                   key={index}
-                  className="rounded-full px-3 py-1 mr-2 mb-1.5"
-                  style={{ backgroundColor: '#F3F4F6' }}
+                  className="rounded-full px-3 py-1.5 mr-2 mb-2"
+                  style={{ backgroundColor: colors.backgroundGray, maxWidth: wp(85) }}
                 >
                   <Text
-                    className="text-gray-600 text-sm"
-                    style={{ fontFamily: 'SpaceGrotesk-Medium' }}
+                    className="text-sm"
+                    style={{ fontFamily: 'SpaceGrotesk-Regular', color: colors.textSecondary }}
+                    numberOfLines={2}
+                    ellipsizeMode="tail"
                   >
                     {interest}
                   </Text>
@@ -457,400 +506,565 @@ export default function ProfileScreen() {
               ))}
             </View>
           </ProfileCard>
+
+          {/* Study Vibe Card */}
+          {user.studyVibe && (
+            <ProfileCard title="Study Vibe" icon={FireIcon} onEdit={() => {}}>
+              <Text
+                style={{ fontFamily: 'SpaceGrotesk-Regular', fontSize: 14, color: colors.textSecondary }}
+              >
+                {user.studyVibe}
+              </Text>
+            </ProfileCard>
+          )}
+
+          {/* Procrastination Style Card */}
+          {user.procrastinationStyle && (
+            <ProfileCard title="Procrastination Style" icon={ClockIcon} onEdit={() => {}}>
+              <Text
+                style={{ fontFamily: 'SpaceGrotesk-Regular', fontSize: 14, color: colors.textSecondary }}
+              >
+                {user.procrastinationStyle}
+              </Text>
+            </ProfileCard>
+          )}
+
+          {/* Will Trade Notes For Card */}
+          {user.willTradeNotesFor && (
+            <ProfileCard title="Will Trade Notes For" icon={HeartIcon} onEdit={() => {}}>
+              <Text
+                style={{ fontFamily: 'SpaceGrotesk-Regular', fontSize: 14, color: colors.textSecondary }}
+              >
+                {user.willTradeNotesFor}
+              </Text>
+            </ProfileCard>
+          )}
+
+          {/* Academic Spirit Animal Card */}
+          {user.academicSpiritAnimal && (
+            <ProfileCard title="Academic Spirit Animal" icon={SparklesIcon} onEdit={() => {}}>
+              <Text
+                style={{ fontFamily: 'SpaceGrotesk-Regular', fontSize: 14, color: colors.textSecondary, lineHeight: 20 }}
+              >
+                {user.academicSpiritAnimal}
+              </Text>
+            </ProfileCard>
+          )}
+
+          {/* Study Session Deal Breakers Card */}
+          {user.studySessionDealBreakers && user.studySessionDealBreakers.length > 0 && (
+            <ProfileCard title="Study Session Deal Breakers" icon={HandRaisedIcon} onEdit={() => {}}>
+              {user.studySessionDealBreakers.map((dealBreaker, index) => (
+                <View key={index} className="flex-row mb-2">
+                  <Text
+                    style={{ fontFamily: 'SpaceGrotesk-Regular', fontSize: 14, color: colors.textSecondary, marginRight: 6 }}
+                  >
+                    •
+                  </Text>
+                  <Text
+                    style={{ fontFamily: 'SpaceGrotesk-Regular', fontSize: 14, color: colors.textSecondary, flex: 1 }}
+                  >
+                    {dealBreaker}
+                  </Text>
+                </View>
+              ))}
+            </ProfileCard>
+          )}
         </View>
       </ScrollView>
 
       {/* Bio Edit Modal */}
       <Modal
         visible={editingBio}
-        animationType="fade"
+        animationType="slide"
         transparent={true}
         onRequestClose={handleCancelBio}
-        statusBarTranslucent
       >
-        <View className="flex-1">
-          <BlurView intensity={50} tint="dark" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            className="flex-1 justify-center items-center"
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+        >
+          <Pressable
+            onPress={handleCancelBio}
+            style={{
+              flex: 1,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              justifyContent: 'flex-end',
+            }}
           >
             <Pressable
-              onPress={handleCancelBio}
-              style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-            />
-            <View
-              className="bg-white rounded-3xl mx-6"
-              style={{ width: wp(85), maxHeight: hp(60) }}
+              onPress={(e) => e.stopPropagation()}
+              style={{
+                backgroundColor: colors.white,
+                borderTopLeftRadius: 24,
+                borderTopRightRadius: 24,
+                paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+              }}
             >
-              <View className="items-center py-5 border-b border-gray-100">
-                <Text
-                  className="text-lg font-bold text-gray-900"
-                  style={{ fontFamily: 'SpaceGrotesk-Bold' }}
-                >
+              {/* Handle bar */}
+              <View style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 8 }}>
+                <View style={{ width: 40, height: 4, backgroundColor: colors.border, borderRadius: 2 }} />
+              </View>
+
+              {/* Header */}
+              <View style={{ paddingHorizontal: 20, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+                <Text style={{ fontFamily: 'SpaceGrotesk-Bold', fontSize: 18, color: colors.textPrimary, textAlign: 'center' }}>
                   Edit About Me
                 </Text>
               </View>
 
-              <View className="px-5 py-5">
+              {/* Content */}
+              <View style={{ padding: 20 }}>
                 <TextInput
                   value={editedBio}
                   onChangeText={setEditedBio}
-                  className="bg-gray-50 border border-gray-200 px-4 py-3 rounded-xl text-gray-900"
                   style={{
                     fontFamily: 'SpaceGrotesk-Regular',
                     fontSize: 14,
                     minHeight: 120,
                     textAlignVertical: 'top',
+                    backgroundColor: colors.backgroundGray,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    borderRadius: 12,
+                    padding: 16,
+                    color: colors.textPrimary,
                   }}
                   placeholder="Tell us about yourself..."
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={colors.textSecondary}
                   multiline
                 />
               </View>
 
-              <View className="flex-row px-5 pb-5 pt-2">
+              {/* Buttons */}
+              <View style={{ flexDirection: 'row', paddingHorizontal: 20, gap: 12 }}>
                 <TouchableOpacity
                   onPress={handleCancelBio}
-                  className="flex-1 py-3.5 rounded-full mr-3"
-                  style={{ backgroundColor: '#F3F4F6' }}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 14,
+                    borderRadius: 12,
+                    backgroundColor: colors.backgroundGray,
+                    alignItems: 'center',
+                  }}
                 >
-                  <Text
-                    className="text-gray-700 text-center font-semibold"
-                    style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15 }}
-                  >
+                  <Text style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15, color: colors.textPrimary }}>
                     Cancel
                   </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   onPress={handleSaveBio}
-                  className="flex-1 py-3.5 rounded-full"
-                  style={{ backgroundColor: '#3B82F6' }}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 14,
+                    borderRadius: 12,
+                    backgroundColor: colors.primary,
+                    alignItems: 'center',
+                  }}
                 >
-                  <Text
-                    className="text-white text-center font-semibold"
-                    style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15 }}
-                  >
-                    Confirm
+                  <Text style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15, color: colors.white }}>
+                    Save
                   </Text>
                 </TouchableOpacity>
               </View>
-            </View>
-          </KeyboardAvoidingView>
-        </View>
+            </Pressable>
+          </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Major Edit Modal */}
       <Modal
         visible={editingMajor}
-        animationType="fade"
+        animationType="slide"
         transparent={true}
         onRequestClose={handleCancelMajor}
-        statusBarTranslucent
       >
-        <View className="flex-1">
-          <BlurView intensity={50} tint="dark" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            className="flex-1 justify-center items-center"
+        <Pressable
+          onPress={handleCancelMajor}
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            justifyContent: 'flex-end',
+          }}
+        >
+          <Pressable
+            onPress={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: colors.white,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+              maxHeight: hp(70),
+            }}
           >
-            <Pressable
-              onPress={handleCancelMajor}
-              style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-            />
-            <View
-              className="bg-white rounded-3xl mx-6"
-              style={{ width: wp(85), maxHeight: hp(70) }}
-            >
-              <View className="items-center py-5 border-b border-gray-100">
-                <Text
-                  className="text-lg font-bold text-gray-900"
-                  style={{ fontFamily: 'SpaceGrotesk-Bold' }}
-                >
-                  Edit Major
-                </Text>
-              </View>
+            {/* Handle bar */}
+            <View style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 8 }}>
+              <View style={{ width: 40, height: 4, backgroundColor: colors.border, borderRadius: 2 }} />
+            </View>
 
-              <ScrollView
-                className="px-5 py-4"
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
-                style={{ maxHeight: hp(40) }}
-              >
-                {commonMajors.map((major, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    onPress={() => setEditedMajor(major)}
-                    className="rounded-xl px-4 py-3.5 mb-2"
+            {/* Header */}
+            <View style={{ paddingHorizontal: 20, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+              <Text style={{ fontFamily: 'SpaceGrotesk-Bold', fontSize: 18, color: colors.textPrimary, textAlign: 'center' }}>
+                Edit Major
+              </Text>
+            </View>
+
+            {/* Content */}
+            <ScrollView
+              style={{ maxHeight: hp(40) }}
+              contentContainerStyle={{ padding: 20 }}
+              showsVerticalScrollIndicator={false}
+            >
+              {commonMajors.map((major, index) => (
+                <TouchableOpacity
+                  key={index}
+                  onPress={() => setEditedMajor(major)}
+                  style={{
+                    backgroundColor: editedMajor === major ? `${colors.primary}15` : colors.backgroundGray,
+                    borderWidth: 1.5,
+                    borderColor: editedMajor === major ? colors.primary : colors.border,
+                    borderRadius: 12,
+                    padding: 16,
+                    marginBottom: 10,
+                  }}
+                >
+                  <Text
                     style={{
-                      backgroundColor: editedMajor === major ? '#FEF3E2' : '#F9FAFB',
-                      borderWidth: 1.5,
-                      borderColor: editedMajor === major ? '#F26322' : '#E5E7EB',
+                      fontFamily: 'SpaceGrotesk-Medium',
+                      fontSize: 15,
+                      color: editedMajor === major ? colors.primary : colors.textPrimary,
                     }}
                   >
-                    <Text
-                      style={{
-                        fontFamily: 'SpaceGrotesk-Medium',
-                        fontSize: 14,
-                        color: editedMajor === major ? '#F26322' : '#374151',
-                      }}
-                    >
-                      {major}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-
-              <View className="flex-row px-5 pb-5 pt-2">
-                <TouchableOpacity
-                  onPress={handleCancelMajor}
-                  className="flex-1 py-3.5 rounded-full mr-3"
-                  style={{ backgroundColor: '#F3F4F6' }}
-                >
-                  <Text
-                    className="text-gray-700 text-center font-semibold"
-                    style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15 }}
-                  >
-                    Cancel
+                    {major}
                   </Text>
                 </TouchableOpacity>
+              ))}
+            </ScrollView>
 
-                <TouchableOpacity
-                  onPress={handleSaveMajor}
-                  className="flex-1 py-3.5 rounded-full"
-                  style={{ backgroundColor: '#3B82F6' }}
-                >
-                  <Text
-                    className="text-white text-center font-semibold"
-                    style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15 }}
-                  >
-                    Confirm
-                  </Text>
-                </TouchableOpacity>
-              </View>
+            {/* Buttons */}
+            <View style={{ flexDirection: 'row', paddingHorizontal: 20, paddingTop: 12, gap: 12 }}>
+              <TouchableOpacity
+                onPress={handleCancelMajor}
+                style={{
+                  flex: 1,
+                  paddingVertical: 14,
+                  borderRadius: 12,
+                  backgroundColor: colors.backgroundGray,
+                  alignItems: 'center',
+                }}
+              >
+                <Text style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15, color: colors.textPrimary }}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleSaveMajor}
+                style={{
+                  flex: 1,
+                  paddingVertical: 14,
+                  borderRadius: 12,
+                  backgroundColor: colors.primary,
+                  alignItems: 'center',
+                }}
+              >
+                <Text style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15, color: colors.white }}>
+                  Save
+                </Text>
+              </TouchableOpacity>
             </View>
-          </KeyboardAvoidingView>
-        </View>
+          </Pressable>
+        </Pressable>
       </Modal>
 
       {/* Classes Edit Modal */}
       <Modal
         visible={editingClasses}
-        animationType="fade"
+        animationType="slide"
         transparent={true}
         onRequestClose={handleCancelClasses}
-        statusBarTranslucent
       >
-        <View className="flex-1">
-          <BlurView intensity={50} tint="dark" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            className="flex-1 justify-center items-center"
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+        >
+          <Pressable
+            onPress={handleCancelClasses}
+            style={{
+              flex: 1,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              justifyContent: 'flex-end',
+            }}
           >
             <Pressable
-              onPress={handleCancelClasses}
-              style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-            />
-            <View
-              className="bg-white rounded-3xl mx-6"
-              style={{ width: wp(85), maxHeight: hp(60) }}
+              onPress={(e) => e.stopPropagation()}
+              style={{
+                backgroundColor: colors.white,
+                borderTopLeftRadius: 24,
+                borderTopRightRadius: 24,
+                paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+              }}
             >
-              <View className="items-center py-5 border-b border-gray-100">
-                <Text
-                  className="text-lg font-bold text-gray-900"
-                  style={{ fontFamily: 'SpaceGrotesk-Bold' }}
-                >
+              {/* Handle bar */}
+              <View style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 8 }}>
+                <View style={{ width: 40, height: 4, backgroundColor: colors.border, borderRadius: 2 }} />
+              </View>
+
+              {/* Header */}
+              <View style={{ paddingHorizontal: 20, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+                <Text style={{ fontFamily: 'SpaceGrotesk-Bold', fontSize: 18, color: colors.textPrimary, textAlign: 'center' }}>
                   Edit Classes
                 </Text>
               </View>
 
-              <View className="px-5 py-4">
-                <View className="flex-row mb-4">
+              {/* Content */}
+              <View style={{ padding: 20 }}>
+                {/* Input row */}
+                <View style={{ flexDirection: 'row', marginBottom: 16 }}>
                   <TextInput
                     value={newClass}
                     onChangeText={setNewClass}
-                    className="bg-gray-50 border border-gray-200 px-4 py-2.5 rounded-xl text-gray-900 flex-1 mr-2"
-                    style={{ fontFamily: 'SpaceGrotesk-Regular', fontSize: 14 }}
+                    style={{
+                      flex: 1,
+                      fontFamily: 'SpaceGrotesk-Regular',
+                      fontSize: 14,
+                      backgroundColor: colors.backgroundGray,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      borderRadius: 12,
+                      padding: 14,
+                      marginRight: 10,
+                      color: colors.textPrimary,
+                    }}
                     placeholder="Add a class (e.g., CS 506)"
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor={colors.textSecondary}
                     onSubmitEditing={handleAddClass}
                   />
                   <TouchableOpacity
                     onPress={handleAddClass}
-                    className="bg-[#F26322] rounded-xl px-4 justify-center"
+                    style={{
+                      backgroundColor: colors.primary,
+                      borderRadius: 12,
+                      paddingHorizontal: 16,
+                      justifyContent: 'center',
+                    }}
                   >
-                    <PlusIcon size={20} color="white" strokeWidth={2.5} />
+                    <PlusIcon size={22} color="white" strokeWidth={2.5} />
                   </TouchableOpacity>
                 </View>
 
-                <View className="flex-row flex-wrap">
+                {/* Tags */}
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', minHeight: 50 }}>
                   {editedClasses.map((course, index) => (
                     <TouchableOpacity
                       key={index}
                       onPress={() => handleRemoveClass(course)}
-                      className="rounded-full px-3 py-1 mr-2 mb-2 flex-row items-center"
-                      style={{ backgroundColor: '#FEF3E2' }}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        backgroundColor: `${colors.primary}15`,
+                        borderRadius: 20,
+                        paddingVertical: 8,
+                        paddingLeft: 14,
+                        paddingRight: 10,
+                        marginRight: 8,
+                        marginBottom: 8,
+                      }}
                     >
-                      <Text
-                        className="text-[#EA580C] text-sm mr-1"
-                        style={{ fontFamily: 'SpaceGrotesk-Medium' }}
-                      >
+                      <Text style={{ fontFamily: 'SpaceGrotesk-Medium', fontSize: 14, color: colors.primary, marginRight: 6 }}>
                         {course}
                       </Text>
-                      <XMarkIcon size={12} color="#EA580C" strokeWidth={2.5} />
+                      <XMarkIcon size={14} color={colors.primary} strokeWidth={2.5} />
                     </TouchableOpacity>
                   ))}
                 </View>
 
-                <Text
-                  className="text-xs text-gray-400 mt-2"
-                  style={{ fontFamily: 'SpaceGrotesk-Regular' }}
-                >
+                <Text style={{ fontFamily: 'SpaceGrotesk-Regular', fontSize: 12, color: colors.textSecondary, marginTop: 8 }}>
                   Tap a class to remove it
                 </Text>
               </View>
 
-              <View className="flex-row px-5 pb-5 pt-2">
+              {/* Buttons */}
+              <View style={{ flexDirection: 'row', paddingHorizontal: 20, gap: 12 }}>
                 <TouchableOpacity
                   onPress={handleCancelClasses}
-                  className="flex-1 py-3.5 rounded-full mr-3"
-                  style={{ backgroundColor: '#F3F4F6' }}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 14,
+                    borderRadius: 12,
+                    backgroundColor: colors.backgroundGray,
+                    alignItems: 'center',
+                  }}
                 >
-                  <Text
-                    className="text-gray-700 text-center font-semibold"
-                    style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15 }}
-                  >
+                  <Text style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15, color: colors.textPrimary }}>
                     Cancel
                   </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   onPress={handleSaveClasses}
-                  className="flex-1 py-3.5 rounded-full"
-                  style={{ backgroundColor: '#3B82F6' }}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 14,
+                    borderRadius: 12,
+                    backgroundColor: colors.primary,
+                    alignItems: 'center',
+                  }}
                 >
-                  <Text
-                    className="text-white text-center font-semibold"
-                    style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15 }}
-                  >
-                    Confirm
+                  <Text style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15, color: colors.white }}>
+                    Save
                   </Text>
                 </TouchableOpacity>
               </View>
-            </View>
-          </KeyboardAvoidingView>
-        </View>
+            </Pressable>
+          </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Interests Edit Modal */}
       <Modal
         visible={editingInterests}
-        animationType="fade"
+        animationType="slide"
         transparent={true}
         onRequestClose={handleCancelInterests}
-        statusBarTranslucent
       >
-        <View className="flex-1">
-          <BlurView intensity={50} tint="dark" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            className="flex-1 justify-center items-center"
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+        >
+          <Pressable
+            onPress={handleCancelInterests}
+            style={{
+              flex: 1,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              justifyContent: 'flex-end',
+            }}
           >
             <Pressable
-              onPress={handleCancelInterests}
-              style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-            />
-            <View
-              className="bg-white rounded-3xl mx-6"
-              style={{ width: wp(85), maxHeight: hp(60) }}
+              onPress={(e) => e.stopPropagation()}
+              style={{
+                backgroundColor: colors.white,
+                borderTopLeftRadius: 24,
+                borderTopRightRadius: 24,
+                paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+              }}
             >
-              <View className="items-center py-5 border-b border-gray-100">
-                <Text
-                  className="text-lg font-bold text-gray-900"
-                  style={{ fontFamily: 'SpaceGrotesk-Bold' }}
-                >
+              {/* Handle bar */}
+              <View style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 8 }}>
+                <View style={{ width: 40, height: 4, backgroundColor: colors.border, borderRadius: 2 }} />
+              </View>
+
+              {/* Header */}
+              <View style={{ paddingHorizontal: 20, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+                <Text style={{ fontFamily: 'SpaceGrotesk-Bold', fontSize: 18, color: colors.textPrimary, textAlign: 'center' }}>
                   Edit Interests
                 </Text>
               </View>
 
-              <View className="px-5 py-4">
-                <View className="flex-row mb-4">
+              {/* Content */}
+              <View style={{ padding: 20 }}>
+                {/* Input row */}
+                <View style={{ flexDirection: 'row', marginBottom: 16 }}>
                   <TextInput
                     value={newInterest}
                     onChangeText={setNewInterest}
-                    className="bg-gray-50 border border-gray-200 px-4 py-2.5 rounded-xl text-gray-900 flex-1 mr-2"
-                    style={{ fontFamily: 'SpaceGrotesk-Regular', fontSize: 14 }}
+                    style={{
+                      flex: 1,
+                      fontFamily: 'SpaceGrotesk-Regular',
+                      fontSize: 14,
+                      backgroundColor: colors.backgroundGray,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      borderRadius: 12,
+                      padding: 14,
+                      marginRight: 10,
+                      color: colors.textPrimary,
+                    }}
                     placeholder="Add an interest"
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor={colors.textSecondary}
                     onSubmitEditing={handleAddInterest}
                   />
                   <TouchableOpacity
                     onPress={handleAddInterest}
-                    className="bg-[#F26322] rounded-xl px-4 justify-center"
+                    style={{
+                      backgroundColor: colors.primary,
+                      borderRadius: 12,
+                      paddingHorizontal: 16,
+                      justifyContent: 'center',
+                    }}
                   >
-                    <PlusIcon size={20} color="white" strokeWidth={2.5} />
+                    <PlusIcon size={22} color="white" strokeWidth={2.5} />
                   </TouchableOpacity>
                 </View>
 
-                <View className="flex-row flex-wrap">
+                {/* Tags */}
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', minHeight: 50 }}>
                   {editedInterests.map((interest, index) => (
                     <TouchableOpacity
                       key={index}
                       onPress={() => handleRemoveInterest(interest)}
-                      className="rounded-full px-3 py-1 mr-2 mb-2 flex-row items-center"
-                      style={{ backgroundColor: '#F3F4F6' }}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        backgroundColor: colors.backgroundGray,
+                        borderRadius: 20,
+                        paddingVertical: 8,
+                        paddingLeft: 14,
+                        paddingRight: 10,
+                        marginRight: 8,
+                        marginBottom: 8,
+                      }}
                     >
-                      <Text
-                        className="text-gray-600 text-sm mr-1"
-                        style={{ fontFamily: 'SpaceGrotesk-Medium' }}
-                      >
+                      <Text style={{ fontFamily: 'SpaceGrotesk-Medium', fontSize: 14, color: colors.textSecondary, marginRight: 6 }}>
                         {interest}
                       </Text>
-                      <XMarkIcon size={12} color="#6B7280" strokeWidth={2.5} />
+                      <XMarkIcon size={14} color={colors.textSecondary} strokeWidth={2.5} />
                     </TouchableOpacity>
                   ))}
                 </View>
 
-                <Text
-                  className="text-xs text-gray-400 mt-2"
-                  style={{ fontFamily: 'SpaceGrotesk-Regular' }}
-                >
+                <Text style={{ fontFamily: 'SpaceGrotesk-Regular', fontSize: 12, color: colors.textSecondary, marginTop: 8 }}>
                   Tap an interest to remove it
                 </Text>
               </View>
 
-              <View className="flex-row px-5 pb-5 pt-2">
+              {/* Buttons */}
+              <View style={{ flexDirection: 'row', paddingHorizontal: 20, gap: 12 }}>
                 <TouchableOpacity
                   onPress={handleCancelInterests}
-                  className="flex-1 py-3.5 rounded-full mr-3"
-                  style={{ backgroundColor: '#F3F4F6' }}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 14,
+                    borderRadius: 12,
+                    backgroundColor: colors.backgroundGray,
+                    alignItems: 'center',
+                  }}
                 >
-                  <Text
-                    className="text-gray-700 text-center font-semibold"
-                    style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15 }}
-                  >
+                  <Text style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15, color: colors.textPrimary }}>
                     Cancel
                   </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   onPress={handleSaveInterests}
-                  className="flex-1 py-3.5 rounded-full"
-                  style={{ backgroundColor: '#3B82F6' }}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 14,
+                    borderRadius: 12,
+                    backgroundColor: colors.primary,
+                    alignItems: 'center',
+                  }}
                 >
-                  <Text
-                    className="text-white text-center font-semibold"
-                    style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15 }}
-                  >
-                    Confirm
+                  <Text style={{ fontFamily: 'SpaceGrotesk-SemiBold', fontSize: 15, color: colors.white }}>
+                    Save
                   </Text>
                 </TouchableOpacity>
               </View>
-            </View>
-          </KeyboardAvoidingView>
-        </View>
+            </Pressable>
+          </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
-
